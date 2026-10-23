@@ -78,6 +78,7 @@ bool Host::environment(unsigned cmd,void* data){
     case RETRO_ENVIRONMENT_SET_GEOMETRY:h.av.geometry=*static_cast<retro_game_geometry*>(data);return true;
     case RETRO_ENVIRONMENT_GET_AUDIO_VIDEO_ENABLE:*static_cast<int*>(data)=3;return true;
     case RETRO_ENVIRONMENT_SET_DISK_CONTROL_INTERFACE:h.discs=*static_cast<retro_disk_control_callback*>(data);return true;
+    case RETRO_ENVIRONMENT_GET_VFS_INTERFACE:{auto* info=static_cast<retro_vfs_interface_info*>(data);if(!h.vfs||info->required_interface_version>3)return false;info->required_interface_version=3;info->iface=h.vfs;return true;}
     case RETRO_ENVIRONMENT_SET_HW_RENDER:h.error="Núcleo exige renderização por hardware não validada";return false;
     case RETRO_ENVIRONMENT_SHUTDOWN:h.pause();return true;
     default:return false;

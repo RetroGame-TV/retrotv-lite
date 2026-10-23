@@ -1,0 +1,11 @@
+{
+  "format": 1,
+  "cores": [
+    {"id":"quicknes","source":"https://github.com/libretro/QuickNES_Core.git","revision":"26bb785c9deddb66a17717b21bb4e328f03ade32","license":"GPL-2.0-or-later; see per-file notices","packaging":"default","systems":["NES"]},
+    {"id":"pcsx_rearmed","source":"https://github.com/libretro/pcsx_rearmed.git","revision":"c8816799b50388e61cfe237fe2cdbb7d8175f20a","license":"GPL-2.0 and dependency notices","packaging":"optional GPL build; hardware unvalidated","systems":["PlayStation"]},
+    {"id":"snes9x2005","source":"https://github.com/libretro/snes9x2005.git","revision":"a79dfe9047e7fec58808aefe48ad2bf499c7af11","license":"Snes9x noncommercial + mixed notices","packaging":"private only; distribution gate","systems":["SNES"]},
+    {"id":"picodrive","source":"https://github.com/libretro/picodrive.git","revision":"1890c2932234c9d30f4cd3851d02228baae8f09e","license":"Noncommercial + mixed notices","packaging":"private only; distribution gate","systems":["Mega Drive","Master System"]},
+    {"id":"fbneo","source":"https://github.com/libretro/FBNeo.git","revision":"2b0c1c0679df115cada7df9199ea2762222e58fd","license":"FBNeo custom noncommercial + legacy MAME and dependencies","packaging":"private only; distribution gate","systems":["Arcade CPS1/CPS2"],"patch":"patches/fbneo-cps12-windows.patch"}
+  ],
+  "disabled": {"N64":"No validated ARMv7 GLES2 HW-render path or TV benchmark","Wii":"Outside local 32-bit/GLES2 scope"}
+}

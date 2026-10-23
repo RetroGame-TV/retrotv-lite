@@ -27,6 +27,8 @@ class UsbLibraryProvider(private val context: Context, private val db: LibraryDa
                 status = "Lendo biblioteca USB…"
                 val queue = ArrayDeque<Pair<String, String>>()
                 queue.add(DC.getTreeDocumentId(tree) to "")
+                var rootName = ""
+                context.contentResolver.query(DC.buildDocumentUriUsingTree(tree, DC.getTreeDocumentId(tree)), arrayOf(DC.Document.COLUMN_DISPLAY_NAME), null, null, null)?.use { if (it.moveToFirst()) rootName = it.getString(0) ?: "" }
                 val visited = HashSet<String>()
                 while (queue.isNotEmpty() && !cancelled.get()) {
                     val (parent, folder) = queue.removeFirst()
@@ -42,7 +44,7 @@ class UsbLibraryProvider(private val context: Context, private val db: LibraryDa
                                 if (name != "Android" && name != "data") queue.add(id to "$folder/$name")
                                 continue
                             }
-                            val system = CatalogRules.system(folder, name) ?: continue
+                            val system = CatalogRules.system("$rootName/$folder", name) ?: continue
                             require(++count <= 10000) { "Limite de 10.000 jogos; escolha uma subpasta" }
                             db.upsert(ContentValues().apply {
                                 put("id", CatalogRules.stableId(tree.toString(), id)); put("tree", tree.toString())
@@ -50,6 +52,7 @@ class UsbLibraryProvider(private val context: Context, private val db: LibraryDa
                                 put("title", CatalogRules.clean(name.substringBeforeLast('.'))); put("system", system)
                                 put("core", CatalogRules.core(system)); put("scan", scan); put("available", 1)
                                 put("size", c.getLong(3)); put("modified", c.getLong(4))
+                                put("relative", "$folder/$name")
                             })
                             if (count % 50 == 0) { status = "$count jogos encontrados"; generation.incrementAndGet() }
                         }

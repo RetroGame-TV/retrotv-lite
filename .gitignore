@@ -7,3 +7,5 @@ local.properties
 *.keystore
 .tools/
 *.log
+cores/packaged/
+cores/private/

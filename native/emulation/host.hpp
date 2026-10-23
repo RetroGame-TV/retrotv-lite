@@ -47,6 +47,7 @@ public:
     std::array<std::array<int16_t,16>,2> buttons{};
     std::array<std::array<int16_t,4>,2> axes{};
     std::string error,coreIdentity;
+    retro_vfs_interface* vfs=nullptr;
     std::function<void(const void*,unsigned,unsigned,size_t,retro_pixel_format)> video;
     std::function<void(const int16_t*,size_t)> audio;
     Host()=default; Host(const Host&)=delete;Host& operator=(const Host&)=delete;

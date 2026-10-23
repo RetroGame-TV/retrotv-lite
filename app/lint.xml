@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<lint>
+    <!-- SDL ships optional Steam BLE, microphone and haptics APIs. RetroTV neither
+         requests those permissions nor invokes them. Keep checks on app code. -->
+    <issue id="MissingPermission">
+        <ignore path="../third_party/SDL/android-project/app/src/main/java/org/libsdl/app/HIDDeviceBLESteamController.java" />
+        <ignore path="../third_party/SDL/android-project/app/src/main/java/org/libsdl/app/HIDDeviceManager.java" />
+        <ignore path="../third_party/SDL/android-project/app/src/main/java/org/libsdl/app/SDLAudioManager.java" />
+        <ignore path="../third_party/SDL/android-project/app/src/main/java/org/libsdl/app/SDLControllerManager.java" />
+    </issue>
+</lint>

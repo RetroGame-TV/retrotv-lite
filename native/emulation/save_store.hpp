@@ -25,7 +25,7 @@ inline void replaceFile(const std::string& from,const std::string& to){
     if(std::rename(from.c_str(),to.c_str())!=0)throw std::runtime_error("Falha na gravação atômica");
 #endif
 }
-inline void atomicWrite(const std::string& path,const std::vector<uint8_t>& b){
+inline void atomicWrite(const std::string& path,const std::vector<uint8_t>& b,bool backupCurrent=true){
     std::filesystem::create_directories(std::filesystem::path(path).parent_path());
     const auto tmp=path+".tmp";FILE* f=std::fopen(tmp.c_str(),"wb");if(!f)throw std::runtime_error("Sem espaço/permissão para salvar");
     bool ok=b.empty()||std::fwrite(b.data(),1,b.size(),f)==b.size();ok=std::fflush(f)==0&&ok;
@@ -35,7 +35,7 @@ inline void atomicWrite(const std::string& path,const std::vector<uint8_t>& b){
     ok=fsync(fileno(f))==0&&ok;
 #endif
     ok=std::fclose(f)==0&&ok;if(!ok)throw std::runtime_error("Save incompleto: original preservado");
-    if(std::filesystem::exists(path)){
+    if(backupCurrent&&std::filesystem::exists(path)){
         std::filesystem::copy_file(path,path+".prev.tmp",std::filesystem::copy_options::overwrite_existing);
         replaceFile(path+".prev.tmp",path+".prev");
     }
@@ -56,7 +56,10 @@ public:
         if(payload.empty())return;if(payload.size()>32*1024*1024)throw std::runtime_error("Save grande demais");
         const std::string metadata=gameIdentity+"\n"+coreIdentity+"\n"+(state?"state":"sram");
         std::vector<uint8_t> out{'R','T','V','S','A','V','E','2'};put(out,uint32_t(metadata.size()));put(out,uint32_t(payload.size()));put(out,crc32(payload.data(),payload.size()));
-        out.insert(out.end(),metadata.begin(),metadata.end());out.insert(out.end(),payload.begin(),payload.end());atomicWrite(path(state),out);
+        out.insert(out.end(),metadata.begin(),metadata.end());out.insert(out.end(),payload.begin(),payload.end());
+        bool backupCurrent=true;
+        if(exists(state)){try{read(state);}catch(...){backupCurrent=false;std::filesystem::copy_file(path(state),path(state)+".rejected",std::filesystem::copy_options::overwrite_existing);}}
+        atomicWrite(path(state),out,backupCurrent);
     }
     std::vector<uint8_t> read(bool state) const {
         auto b=readBounded(path(state));if(b.empty())return {};

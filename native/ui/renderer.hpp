@@ -1,12 +1,15 @@
 #pragma once
 #include <SDL.h>
 #include "model.hpp"
+#include <sstream>
+#include <cmath>
 namespace rt {
 class UI {
     SDL_Renderer* renderer; SDL_Texture* atlas;
+    std::array<int,224> advances{};
 public:
     Theme theme=Theme::classic();
-    UI(SDL_Renderer* r,SDL_Texture* a):renderer(r),atlas(a){}
+    UI(SDL_Renderer* r,SDL_Texture* a,const std::string& metrics):renderer(r),atlas(a){advances.fill(16);std::istringstream input(metrics);std::string value;size_t i=0;while(i<advances.size()&&std::getline(input,value,','))advances[i++]=std::max(1,std::atoi(value.c_str()));}
     void color(uint32_t c) { SDL_SetRenderDrawColor(renderer,(c>>16)&255,(c>>8)&255,c&255,255); }
     void rect(int x,int y,int w,int h,uint32_t c) { color(c); SDL_Rect box{x,y,w,h}; SDL_RenderFillRect(renderer,&box); }
     void text(int x,int y,const std::string& s,int size=24,uint32_t c=0) {
@@ -19,7 +22,7 @@ public:
             else if(ch>=0xe0) { while(i<s.size() && (static_cast<unsigned char>(s[i])&0xc0)==0x80)++i; ch='?'; }
             if(ch<32||ch>255)ch='?'; unsigned index=ch-32;
             SDL_Rect src{int(index%16)*64,int(index/16)*64,64,64},dst{x,y,size*2,size*2};
-            SDL_RenderCopy(renderer,atlas,&src,&dst); x+=size; ++count;
+            SDL_RenderCopy(renderer,atlas,&src,&dst); x+=int(std::ceil(advances[index]*size/32.0))+1; ++count;
         }
     }
     void button(int y,const std::string& title,bool focus) {
@@ -63,9 +66,13 @@ public:
             }
         } else if(m.screen==Screen::Settings) {
             text(312,113,"Do seu jeito",28); text(312,167,"Configurações locais · sem conta · sem nuvem",15,theme.muted);
-            std::vector<std::string> items={"Biblioteca USB: escolher pasta","Biblioteca USB: atualizar / cancelar scan",std::string("Tema: ")+(m.minimal?"Minimal":"Classic"),std::string("Performance: ")+(m.performance?"ligado":"desligado"),"Exportar backup de saves","Restaurar backup de saves","Controles e remapeamento","Diagnóstico","Sobre e licenças","Testar demonstração original NES"};
+            std::vector<std::string> items={"Biblioteca USB: escolher pasta","Biblioteca USB: atualizar / cancelar scan",std::string("Tema: ")+(m.minimal?"Minimal":"Classic"),std::string("Performance: ")+(m.performance?"ligado":"desligado"),"Exportar backup de saves","Restaurar backup de saves","Controles e remapeamento","Diagnóstico","Sobre e licenças","Testar demonstração original NES","Importar BIOS PS1 do seu acervo"};
             int first=std::max(0,m.option-5);
             for(int i=first;i<int(items.size())&&i<first+6;++i)button(222+(i-first)*59,items[i],m.option==i);
+        } else if(m.screen==Screen::Controls) {
+            text(312,118,"Controles · remapeamento",28);text(312,174,m.message.substr(0,m.message.find('\n')),15,theme.muted);
+            const char* items[]={"B","Y","SELECT","START","Cima","Baixo","Esquerda","Direita","A","X","L1","R1","L2","R2","L3","R3"};
+            int first=std::max(0,m.option-5);for(int i=first;i<16&&i<first+6;++i)button(222+(i-first)*59,std::string("Comando: ")+items[i]+"  ·  OK para capturar botão",m.option==i);
         } else if(m.screen==Screen::QuickMenu) {
             text(312,118,"Pausa · no seu tempo",28);
             const char* items[]={"Continuar","Salvar estado","Carregar estado","Reiniciar jogo","Controles","Proporção: alternar 4:3 / tela cheia","Trocar disco","Salvar e sair para biblioteca","Diagnóstico da sessão"};

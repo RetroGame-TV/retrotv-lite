@@ -4,3 +4,15 @@
 [submodule "third_party/quicknes"]
     path = third_party/quicknes
     url = https://github.com/libretro/QuickNES_Core.git
+[submodule "third_party/snes9x2005"]
+    path = third_party/snes9x2005
+    url = https://github.com/libretro/snes9x2005.git
+[submodule "third_party/picodrive"]
+    path = third_party/picodrive
+    url = https://github.com/libretro/picodrive.git
+[submodule "third_party/pcsx_rearmed"]
+    path = third_party/pcsx_rearmed
+    url = https://github.com/libretro/pcsx_rearmed.git
+[submodule "third_party/fbneo"]
+    path = third_party/fbneo
+    url = https://github.com/libretro/FBNeo.git
