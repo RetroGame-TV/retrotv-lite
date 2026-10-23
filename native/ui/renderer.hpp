@@ -63,9 +63,13 @@ public:
             }
         } else if(m.screen==Screen::Settings) {
             text(312,113,"Do seu jeito",28); text(312,167,"Configurações locais · sem conta · sem nuvem",15,theme.muted);
-            std::vector<std::string> items={"Biblioteca USB: escolher pasta","Biblioteca USB: atualizar / cancelar scan",std::string("Tema: ")+(m.minimal?"Minimal":"Classic"),std::string("Performance: ")+(m.performance?"ligado":"desligado"),"Exportar backup de saves","Restaurar backup de saves","Controles e remapeamento","Diagnóstico","Sobre e licenças"};
+            std::vector<std::string> items={"Biblioteca USB: escolher pasta","Biblioteca USB: atualizar / cancelar scan",std::string("Tema: ")+(m.minimal?"Minimal":"Classic"),std::string("Performance: ")+(m.performance?"ligado":"desligado"),"Exportar backup de saves","Restaurar backup de saves","Controles e remapeamento","Diagnóstico","Sobre e licenças","Testar demonstração original NES"};
             int first=std::max(0,m.option-5);
             for(int i=first;i<int(items.size())&&i<first+6;++i)button(222+(i-first)*59,items[i],m.option==i);
+        } else if(m.screen==Screen::QuickMenu) {
+            text(312,118,"Pausa · no seu tempo",28);
+            const char* items[]={"Continuar","Salvar estado","Carregar estado","Reiniciar jogo","Controles","Proporção: alternar 4:3 / tela cheia","Trocar disco","Salvar e sair para biblioteca","Diagnóstico da sessão"};
+            int first=std::max(0,m.option-5);for(int i=first;i<9&&i<first+6;++i)button(215+(i-first)*61,items[i],m.option==i);
         } else {
             text(312,118,m.screen==Screen::Error?"Não foi possível continuar":m.screen==Screen::Diagnostics?"Diagnóstico local":m.screen==Screen::Controls?"Controles":"RetroTV Lite",26);
             int y=196; size_t start=0;

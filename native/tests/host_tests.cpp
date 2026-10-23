@@ -1,0 +1,29 @@
+#include "emulation/host.hpp"
+#include "emulation/save_store.hpp"
+#include <iostream>
+#include <stdexcept>
+using namespace rt;
+void check(bool c,const char* text){if(!c)throw std::runtime_error(text);}
+int main(int argc,char**argv){
+    try{
+        if(argc!=4)throw std::runtime_error("host_tests core demo scratch");
+        auto rom=readBounded(argv[2]);check(rom.size()==24592,"unexpected demo size");
+        Host bad;check(!bad.open("missing-core",argv[2],rom,".","."),"missing core accepted");check(bad.state==SessionState::Failed,"failure state");
+        Host h;unsigned frames=0;size_t samples=0;uint32_t first=0,last=0;
+        h.video=[&](const void* p,unsigned w,unsigned height,size_t pitch,retro_pixel_format){check(w>0&&height>0,"empty frame");++frames;last=crc32(static_cast<const uint8_t*>(p),pitch*height);if(!first)first=last;};
+        h.audio=[&](const int16_t*,size_t n){samples+=n;};
+        check(h.open(argv[1],argv[2],rom,".","."),h.error.c_str());check(h.state==SessionState::Running,"launch state");
+        for(int i=0;i<120;++i)h.run();auto snapshot=h.serialize();check(!snapshot.empty(),"real core serialize failed");
+        h.pause();auto before=frames;h.run();check(frames==before,"paused core ran");h.resume();
+        h.buttons[0][RETRO_DEVICE_ID_JOYPAD_RIGHT]=1;for(int i=0;i<120;++i)h.run();check(first!=last,"controller did not alter rendered frame");check(h.unserialize(snapshot),"real core restore failed");
+        h.buttons[1][RETRO_DEVICE_ID_JOYPAD_A]=1;h.reset();h.run();check(frames>=241&&samples>1000,"missing video/audio callbacks");
+        SaveStore store(argv[3],"game:crc","QuickNES:pin");store.write(true,snapshot);check(store.read(true)==snapshot,"save roundtrip");
+        auto changed=snapshot;changed[0]^=1;store.write(true,changed);check(std::filesystem::exists(store.path(true)+".prev"),"no recovery backup");
+        bool rejected=false;try{SaveStore wrong(argv[3],"different-game","QuickNES:pin");wrong.read(true);}catch(...){rejected=true;}check(rejected,"wrong content accepted");
+        auto corrupt=readBounded(store.path(true));corrupt.back()^=1;atomicWrite(store.path(true),corrupt);rejected=false;try{store.read(true);}catch(...){rejected=true;}check(rejected,"corrupt payload accepted");
+        h.close();check(h.state==SessionState::Menu,"did not return to menu");
+        for(int i=0;i<10;++i){check(h.open(argv[1],argv[2],rom,".","."),"reopen failed");h.run();h.close();}
+        std::cout<<"REAL QuickNES: 241+ frames, audio, input, pause/resume, reset, states, 10 reopen cycles passed. Save integrity/backup/mismatch tests passed.\n";
+        return 0;
+    }catch(const std::exception& e){std::cerr<<e.what()<<"\n";return 1;}
+}

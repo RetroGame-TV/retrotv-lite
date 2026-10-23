@@ -13,6 +13,7 @@ import android.content.Intent
 import android.content.ActivityNotFoundException
 import android.net.Uri
 import android.os.Debug
+import android.os.ParcelFileDescriptor
 import android.system.Os
 import android.system.OsConstants
 import java.io.File
@@ -56,7 +57,7 @@ class RetroActivity : SDLActivity() {
         else -> filesDir.absolutePath
     }
     fun diagnostics(value: String): String = "Android ${android.os.Build.VERSION.RELEASE}\nABI: ${android.os.Build.SUPPORTED_ABIS.joinToString()}\nPSS local: ${Debug.getPss()} KiB\nSDL2 / OpenGL ES 2.0\nQuickNES integrado; demais cores condicionais\nN64: desabilitado, sem validação GLES2\n${library.status}"
-    fun request(value: String): String = try {
+    fun request(value: String): String { return try {
         val p = value.split('\t')
         when (p[0]) {
             "choose" -> runOnUiThread { pickTree() }
@@ -64,6 +65,11 @@ class RetroActivity : SDLActivity() {
             "favorite" -> { database.favorite(p[1], p[2] == "1"); library.generation.incrementAndGet() }
             "record" -> { database.record(p[1], p[2].toLong()); library.generation.incrementAndGet() }
             "open" -> {
+                if (p[1] == "demo:retrotv-pad-test.nes") {
+                    val demo = File(cacheDir, "retrotv-pad-test.nes")
+                    assets.open("demo/retrotv-pad-test.nes").use { input -> demo.outputStream().use { input.copyTo(it) } }
+                    return ParcelFileDescriptor.open(demo, ParcelFileDescriptor.MODE_READ_ONLY).detachFd().toString()
+                }
                 val uri = Uri.parse(p[1])
                 val fd = contentResolver.openFileDescriptor(uri, "r") ?: error("USB indisponível")
                 try { Os.lseek(fd.fileDescriptor, 0, OsConstants.SEEK_SET) } catch (e: Exception) { fd.close(); error("Este provedor USB não permite seek") }
@@ -71,7 +77,7 @@ class RetroActivity : SDLActivity() {
             }
         }
         "OK"
-    } catch (e: Exception) { "ERR: ${e.message ?: "falha de acesso"}" }
+    } catch (e: Exception) { "ERR: ${e.message ?: "falha de acesso"}" } }
     private fun pickTree() {
         try {
             startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {

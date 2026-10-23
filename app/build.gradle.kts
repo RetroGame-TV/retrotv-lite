@@ -1,4 +1,6 @@
 plugins { id("com.android.application"); id("org.jetbrains.kotlin.android") }
+val testAbi = providers.gradleProperty("testAbi").orNull
+if (testAbi != null) { require(testAbi == "x86"); layout.buildDirectory.set(file("build-emulator")) }
 android {
     namespace = "org.retrotv.lite"
     compileSdk = 35
@@ -9,7 +11,7 @@ android {
         targetSdk = 32
         versionCode = 1
         versionName = "0.1.0-dev"
-        ndk { abiFilters += "armeabi-v7a" }
+        ndk { abiFilters += (testAbi ?: "armeabi-v7a") }
         externalNativeBuild { cmake { cppFlags += listOf("-std=c++17", "-Wall", "-Wextra"); arguments += "-DANDROID_STL=c++_shared" } }
         testInstrumentationRunner = "android.test.InstrumentationTestRunner"
     }
