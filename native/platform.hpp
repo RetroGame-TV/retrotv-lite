@@ -1,0 +1,35 @@
+#pragma once
+#include <SDL.h>
+#include <jni.h>
+#include <string>
+#include <vector>
+namespace rt {
+class Platform {
+    JNIEnv* env() { return static_cast<JNIEnv*>(SDL_AndroidGetJNIEnv()); }
+public:
+    std::string call(const char* method, const std::string& value="") {
+        auto* e=env(); auto activity=SDL_AndroidGetActivity(); auto cls=e->GetObjectClass(activity);
+        auto mid=e->GetMethodID(cls,method,"(Ljava/lang/String;)Ljava/lang/String;");
+        auto arg=e->NewStringUTF(value.c_str());
+        auto result=static_cast<jstring>(e->CallObjectMethod(activity,mid,arg)); std::string out;
+        if(e->ExceptionCheck()) { e->ExceptionDescribe(); e->ExceptionClear(); }
+        else if(result) { const char* s=e->GetStringUTFChars(result,nullptr); out=s; e->ReleaseStringUTFChars(result,s); }
+        if(result)e->DeleteLocalRef(result); e->DeleteLocalRef(arg); e->DeleteLocalRef(cls); e->DeleteLocalRef(activity); return out;
+    }
+    SDL_Texture* font(SDL_Renderer* r) {
+        auto* e=env(); auto activity=SDL_AndroidGetActivity(); auto cls=e->GetObjectClass(activity);
+        auto mid=e->GetMethodID(cls,"fontAtlas","()[B"); auto bytes=static_cast<jbyteArray>(e->CallObjectMethod(activity,mid));
+        if(!bytes||e->ExceptionCheck()) { e->ExceptionClear(); return nullptr; }
+        auto data=e->GetByteArrayElements(bytes,nullptr);
+        auto* surface=SDL_CreateRGBSurfaceWithFormatFrom(data,1024,896,32,4096,SDL_PIXELFORMAT_RGBA32);
+        auto* texture=SDL_CreateTextureFromSurface(r,surface); SDL_FreeSurface(surface);
+        e->ReleaseByteArrayElements(bytes,data,JNI_ABORT); e->DeleteLocalRef(bytes); e->DeleteLocalRef(cls); e->DeleteLocalRef(activity);
+        SDL_SetTextureBlendMode(texture,SDL_BLENDMODE_BLEND); return texture;
+    }
+};
+inline std::vector<std::string> split(const std::string& s,char delim) {
+    std::vector<std::string> out; size_t start=0,pos;
+    while((pos=s.find(delim,start))!=std::string::npos) { out.push_back(s.substr(start,pos-start)); start=pos+1; }
+    out.push_back(s.substr(start)); return out;
+}
+}
