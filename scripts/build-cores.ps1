@@ -39,6 +39,13 @@ foreach ($name in $Core) {
         $jni = Join-Path $source 'src/burner/libretro/jni'
     } else { $jni = Join-Path $source 'jni' }
     $jni = $jni.Replace('\', '/')
+    $makefile = Join-Path $jni 'Android.mk'
+    $makeText = Get-Content -Raw -LiteralPath $makefile
+    $relativeObjects = 'LOCAL_SRC_FILES := $(patsubst $(LOCAL_PATH)/%,%,$(LOCAL_SRC_FILES))'
+    if (!$makeText.Contains($relativeObjects)) {
+        $makeText = $makeText.Replace('include $(BUILD_SHARED_LIBRARY)', $relativeObjects + "`n" + 'include $(BUILD_SHARED_LIBRARY)')
+        [IO.File]::WriteAllText($makefile, $makeText)
+    }
     $outRoot = (Join-Path $projectRoot "build/cores/$name").Replace('\', '/')
     $buildArgs = @("NDK_PROJECT_PATH=$source", "APP_BUILD_SCRIPT=$jni/Android.mk", "NDK_APPLICATION_MK=$jni/Application.mk", 'APP_ABI=armeabi-v7a', 'APP_PLATFORM=android-26', 'APP_STL=c++_shared', "NDK_OUT=$outRoot/obj", "NDK_LIBS_OUT=$outRoot/lib", '-j4')
     if ($name -eq 'pcsx_rearmed') { $buildArgs += @('USE_ASYNC_CDROM=0','USE_ASYNC_GPU=0','USE_ASYNC_SPU=0','NDRC_THREAD=0') }

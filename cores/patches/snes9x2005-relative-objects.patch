@@ -1,0 +1,10 @@
+diff --git a/jni/Android.mk b/jni/Android.mk
+index 7c9b974..14cb6af 100644
+--- a/jni/Android.mk
++++ b/jni/Android.mk
+@@ -21,4 +21,5 @@ LOCAL_MODULE    := retro
+ LOCAL_SRC_FILES := $(SOURCES_C)
+ LOCAL_CFLAGS    := $(COREFLAGS)
+ LOCAL_LDFLAGS   := -Wl,-version-script=$(LIBRETRO_DIR)/link.T
++LOCAL_SRC_FILES := $(patsubst $(LOCAL_PATH)/%,%,$(LOCAL_SRC_FILES))
+ include $(BUILD_SHARED_LIBRARY)

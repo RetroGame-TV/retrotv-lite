@@ -1,14 +1,17 @@
 package org.retrotv.lite
 import android.net.Uri
-import android.test.AndroidTestCase
-import android.test.RenamingDelegatingContext
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import org.junit.Assert.*
+import org.junit.Test
+import org.junit.runner.RunWith
 
-@Suppress("DEPRECATION")
-class StorageIntegrationTest : AndroidTestCase() {
-    fun testSafScanDedupFavoriteAndDisconnectedRecovery() {
-        val isolated = RenamingDelegatingContext(context, "retrotv_test_")
-        isolated.deleteDatabase("catalog.db")
-        val db = LibraryDatabase(isolated)
+@RunWith(AndroidJUnit4::class)
+class StorageIntegrationTest {
+    private val context get() = InstrumentationRegistry.getInstrumentation().targetContext
+    @Test fun safScanDedupFavoriteAndDisconnectedRecovery() {
+        context.deleteDatabase("storage-test.db")
+        val db = LibraryDatabase(context, "storage-test.db")
         val library = UsbLibraryProvider(context, db)
         val tree = Uri.parse("content://org.retrotv.lite.testdocs/tree/root")
         fun scan(scenario: String) {
@@ -26,19 +29,23 @@ class StorageIntegrationTest : AndroidTestCase() {
             scan("removed"); assertTrue(db.snapshot().contains(id))
             scan("empty"); assertEquals("0", db.snapshot().trim().split('\t')[8])
             scan("normal"); assertEquals("1", db.snapshot().trim().split('\t')[8])
-        } finally { library.close(); db.close(); isolated.deleteDatabase("catalog.db"); TestDocumentsProvider.scenario = "normal" }
+            val before = library.generation.get(); TestDocumentsProvider.scenario = "removed"; library.validate(tree)
+            val deadline = System.currentTimeMillis() + 10000
+            while (library.generation.get() == before && System.currentTimeMillis() < deadline) Thread.sleep(10)
+            assertEquals("0", db.snapshot().trim().split('\t')[8]); assertTrue(library.status.contains("USB ausente"))
+        } finally { library.close(); db.close(); context.deleteDatabase("storage-test.db"); TestDocumentsProvider.scenario = "normal" }
     }
-    fun testDatabaseV1MigrationPreservesUserMetadata() {
-        val isolated = RenamingDelegatingContext(context, "retrotv_migration_")
-        isolated.deleteDatabase("catalog.db")
-        val path = isolated.getDatabasePath("catalog.db"); path.parentFile?.mkdirs()
+    @Test fun databaseV1MigrationPreservesUserMetadata() {
+        context.deleteDatabase("migration-test.db")
+        val path = context.getDatabasePath("migration-test.db"); path.parentFile?.mkdirs()
         android.database.sqlite.SQLiteDatabase.openOrCreateDatabase(path, null).use { db ->
             db.execSQL("CREATE TABLE games(id TEXT PRIMARY KEY, tree TEXT, uri TEXT, title TEXT, system TEXT, core TEXT, favorite INTEGER, recent INTEGER, played INTEGER, available INTEGER, scan TEXT, size INTEGER, modified INTEGER)")
             db.execSQL("INSERT INTO games VALUES('kept','tree','uri','Game','NES','quicknes',1,5,61,1,'old',10,1)")
+            db.execSQL("UPDATE games SET uri=? WHERE id='kept'", arrayOf("content://provider/" + "x".repeat(500)))
             db.version = 1
         }
-        val db = LibraryDatabase(isolated)
-        try { assertTrue(db.snapshot().contains("kept")); assertEquals("1", db.snapshot().trim().split('\t')[5]); assertEquals(2, db.readableDatabase.version) }
-        finally { db.close(); isolated.deleteDatabase("catalog.db") }
+        val db = LibraryDatabase(context, "migration-test.db")
+        try { assertTrue(db.snapshot().contains("kept")); assertEquals("1", db.snapshot().trim().split('\t')[5]); assertEquals("content://provider/" + "x".repeat(500), db.snapshot().trim().split('\t')[3]); assertEquals(2, db.readableDatabase.version) }
+        finally { db.close(); context.deleteDatabase("migration-test.db") }
     }
 }

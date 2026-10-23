@@ -10,7 +10,7 @@ Não há TV conectada nem validação física. Fases são marcos de implementaç
 | F3 | Host Libretro + QuickNES real, áudio/vídeo/input, sessão, demo CC0 | CTest real QuickNES passou no Windows; build ARMv7 passou; 10 min/Philco pendentes |
 | F4 | Saves/Quick Resume, backup, remapeamento, 2 slots; SNES/Pico/FBNeo/PCSX compilados ARMv7 | 7 testes Kotlin e 3 CTests passaram; jogos dos cores extras, Bluetooth e USB reais pendentes |
 | F5 | Spike documentado, N64 oculto/desabilitado e gate de HW render | Sem integração GLES2 comprovada; não suportado nesta versão |
-| F6 | Pendente | CI, testes e pacote |
+| F6 | Build debug/release, lint, CI preparado, scripts, documentação e pacote | Testes locais e Android virtual passaram; assinatura release/CI GitHub/TV pendentes |
 | F7 | Adiado | Extras só após fluxo principal validado |
 
 ## F0
@@ -41,3 +41,27 @@ Build Gradle `:app:assembleDebug :app:testDebugUnitTest` passou em 25s após cor
 ## F5
 
 Pesquisa upstream de Mupen64Plus-Next/ParaLLEl registrada em n64-spike.md. Faltam contexto HW Libretro/GLES2 integrado, plugin ARMv7 comprovado e medições na Mali. Não há atalho N64 ativo, nem promessa de desempenho. Gate automatizado rejeita habilitação incidental. Fase de investigação concluída; suporte não implementado.
+
+## F6: evidências finais
+
+| Verificação executada | Resultado observado |
+|---|---|
+| Gradle `:app:assembleDebug :app:testDebugUnitTest :app:lintDebug :app:assembleRelease` | BUILD SUCCESSFUL; APK ARMv7 debug e release **não assinado** gerados |
+| Auditoria ZIP/ELF do APK debug | 5 libs exclusivamente ELF32 ARM: SDL2, libc++, main, QuickNES e PCSX ReARMed; demo e licenças presentes |
+| `apksigner verify --verbose` | Assinatura debug v2 verificada; não é assinatura release |
+| JUnit JVM | 7 testes, zero falhas: catálogo, paths e backup |
+| CTest Windows/LLVM-MinGW | 3/3 suítes: 9 cenários de navegação/política, core QuickNES real, VFS esparso de 5 GiB |
+| Host QuickNES real | Vídeo/input/áudio, pausa/reset, SRAM com bateria preservada ao reabrir, state, corrupção, proteção do .prev e 10 ciclos de sessão passaram |
+| Android TV 11 x86 virtual / AndroidJUnitRunner | 2 testes passaram: provider SAF sintético com falhas/remoção/retorno e migração v1→v2 com favoritos e URI >500 caracteres |
+| Navegação Android virtual | Demo iniciou com DPAD_CENTER/OK; menu rápido, salvar/carregar estado, saída à biblioteca e Home/retorno observados; captura real do renderer |
+| Build de cores adicionais | ARMv7 SNES/PicoDrive/PCSX/FBNeo CPS12 compilados; execução com jogos desses sistemas permanece não validada |
+| CI GitHub Actions | Workflow criado; não executado remotamente |
+| Philco / USB físico / gamepads físicos | Não disponíveis; sem instalação, FPS/PSS ou compatibilidade afirmados |
+
+A revalidação do USB no resume é uma consulta leve ao documento raiz, sem rescan completo. Eventos de montagem iniciam scan; remoção revalida a árvore e marca indisponibilidade. O provider OEM real ainda precisa ser testado. Lint passou com exceções **somente nas APIs opcionais de quatro arquivos SDL**, descritas em licenses.md. Nenhuma permissão INTERNET, microfone, Bluetooth scanning ou armazenamento irrestrito foi adicionada.
+
+Entrega fora da árvore do código: APK debug instalável, APK release sem assinatura, ZIP de fontes com dependências, screenshot e logs/checksums em `outputs/`. Documentação de build não depende dos caminhos temporários desta máquina. Gitlinks permanecem nas revisões upstream; alterações de build necessárias são reproduzidas por scripts e patches (submódulos podem aparecer modificados por isso).
+
+## F7 e escopo restante
+
+Adiado conforme gate do plano: scraper opt-in, perfis de usuário, previews e personalização avançada exigem primeiro fluxo principal comprovado no hardware. Também não foram concluídos editor avançado de perfil por jogo/console, capas locais/LRU de imagens, reconhecimento universal de gamepads nem teste físico dos consoles adicionais. A versão é **0.1.0-dev**, não 1.0 completa/validada. Prioridade seguinte é executar `docs/test-on-philco.md` com arquivos legais do proprietário.

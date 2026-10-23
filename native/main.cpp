@@ -16,6 +16,10 @@ int main(int, char**) {
     Platform platform; auto* atlas=platform.font(renderer); UI ui(renderer,atlas,platform.call("fontMetrics")); Model model;
     model.minimal=platform.call("setting","minimal")=="1";
     model.performance=platform.call("setting","performance")=="1";
+    auto savedTab=platform.call("setting","tab");if(!savedTab.empty())model.tab=std::clamp(std::atoi(savedTab.c_str()),0,8);
+    model.lastContentTab=model.tab;
+    auto savedPositions=split(platform.call("setting","positions"),',');if(savedPositions.size()==10)for(int i=0;i<10;++i)model.positions[i]=std::max(0,std::atoi(savedPositions[i].c_str()));model.selection=model.positions[model.tab];
+    auto saveFocus=[&]{model.positions[model.tab]=model.selection;platform.call("setting","tab\t"+std::to_string(model.lastContentTab));std::string value;for(auto n:model.positions){if(!value.empty())value+=",";value+=std::to_string(n);}platform.call("setting","positions\t"+value);};
     auto loadCatalog=[&] {
         const auto old=model.selected()?model.selected()->id:"";
         model.games.clear();
@@ -35,6 +39,7 @@ int main(int, char**) {
     std::array<int16_t,16> remotePulse{};
     bool running=true,background=false; std::map<SDL_JoystickID,SDL_GameController*> controllers;
     auto action=[&](Action a) {
+        if(!session.active()&&model.screen==Screen::Library&&model.sidebar&&a==Action::Back){saveFocus();running=false;return;}
         if(model.screen==Screen::Controls){
             if(a==Action::Back){remapTarget=-1;model.screen=session.active()?Screen::QuickMenu:Screen::Settings;model.option=0;return;}
             if(a==Action::Up)model.option=std::max(0,model.option-1);
@@ -57,7 +62,7 @@ int main(int, char**) {
                 if(pendingAction==1)ok=session.save(true);
                 if(pendingAction==2)ok=session.load();
                 if(pendingAction==3)session.host.reset();
-                if(pendingAction==7){session.finish(platform);loadCatalog();model.screen=Screen::Library;return;}
+                if(pendingAction==7){session.finish(platform);model.selectTab(model.lastContentTab);loadCatalog();model.screen=Screen::Library;return;}
                 model.screen=ok?Screen::QuickMenu:Screen::Error;model.message=session.error;return;
             }
             if(session.host.state==SessionState::Running){
@@ -69,7 +74,7 @@ int main(int, char**) {
             if(a==Action::Ok){
                 if(model.option==1||model.option==2||model.option==3||model.option==7){pendingAction=model.option;model.screen=Screen::Confirm;model.message=model.option==7?"Salvar Quick Resume e sair da sessão?\nSe o núcleo não suportar snapshot, manter SRAM.\nOK confirma · Voltar cancela":"Confirmar esta operação?\nSave anterior fica em arquivo .prev.\nAo carregar estado, SRAM atual é preservada.\nOK confirma · Voltar cancela";}
                 if(model.option==4){model.screen=Screen::Controls;model.option=0;model.message="OK: remapear com um botão do gamepad.\nConfiguração salva por modelo de controle.";return;}
-                if(model.option==5)session.stretch=!session.stretch;
+                if(model.option==5){session.stretch=!session.stretch;platform.call("setting","aspect-"+session.game.id+"\t"+(session.stretch?"wide":"4:3"));}
                 if(model.option==6&&!session.host.switchDisc()){model.screen=Screen::Error;model.message="Troca de disco não disponível neste núcleo.";}
                 if(model.option==8){model.screen=Screen::Diagnostics;model.message=session.metrics();}
             }
@@ -106,12 +111,15 @@ int main(int, char**) {
             return;
         }
         model.navigate(a);
+        saveFocus();
     };
     while(running) {
         SDL_Event e;
         while(SDL_PollEvent(&e)) {
             if(e.type==SDL_QUIT)running=false;
-            if(e.type==SDL_APP_WILLENTERBACKGROUND){background=true;if(session.active()){session.pause();session.save(true);model.screen=Screen::QuickMenu;model.option=0;}}
+            if(e.type==SDL_RENDER_DEVICE_RESET){session.invalidateFrame();SDL_DestroyTexture(atlas);atlas=platform.font(renderer);ui.setAtlas(atlas);}
+            if(e.type==SDL_APP_LOWMEMORY){model.performance=true;platform.call("setting","performance\t1");}
+            if(e.type==SDL_APP_WILLENTERBACKGROUND){background=true;saveFocus();if(session.active()){session.pause();session.save(true);model.screen=Screen::QuickMenu;model.option=0;}}
             if(e.type==SDL_APP_DIDENTERFOREGROUND)background=false;
             if(e.type==SDL_CONTROLLERDEVICEADDED) {auto* c=SDL_GameControllerOpen(e.cdevice.which);if(c){auto id=SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(c));controllers[id]=c;mappings[id]=defaultMapping;auto saved=split(platform.call("setting",controllerKey(c)),',');if(saved.size()==16)for(int i=0;i<16;++i){auto v=std::atoi(saved[i].c_str());if(v>=-3&&v<SDL_CONTROLLER_BUTTON_MAX)mappings[id][i]=v;}for(auto& slot:players)if(slot<0){slot=id;break;}}}
             if(e.type==SDL_CONTROLLERDEVICEREMOVED) {auto it=controllers.find(e.cdevice.which);if(it!=controllers.end()){SDL_GameControllerClose(it->second);controllers.erase(it);}mappings.erase(e.cdevice.which);for(auto& id:players)if(id==e.cdevice.which)id=-1;if(session.active()){session.pause();model.screen=Screen::Error;model.message="Controle desconectado. Reconecte para continuar.\nOK ou Voltar abre o menu rápido.";}}
@@ -150,7 +158,7 @@ int main(int, char**) {
             buttons[RETRO_DEVICE_ID_JOYPAD_UP]|=keys[SDL_SCANCODE_UP];buttons[RETRO_DEVICE_ID_JOYPAD_DOWN]|=keys[SDL_SCANCODE_DOWN];buttons[RETRO_DEVICE_ID_JOYPAD_LEFT]|=keys[SDL_SCANCODE_LEFT];buttons[RETRO_DEVICE_ID_JOYPAD_RIGHT]|=keys[SDL_SCANCODE_RIGHT];buttons[RETRO_DEVICE_ID_JOYPAD_A]|=keys[SDL_SCANCODE_RETURN]||keys[SDL_SCANCODE_X]||keys[SDL_SCANCODE_SELECT];buttons[RETRO_DEVICE_ID_JOYPAD_B]|=keys[SDL_SCANCODE_Z];buttons[RETRO_DEVICE_ID_JOYPAD_START]|=keys[SDL_SCANCODE_SPACE];buttons[RETRO_DEVICE_ID_JOYPAD_SELECT]|=keys[SDL_SCANCODE_TAB];
             auto now=SDL_GetPerformanceCounter();if(!nextFrame)nextFrame=now;
             if(now<nextFrame)SDL_Delay(Uint32((nextFrame-now)*1000/SDL_GetPerformanceFrequency()));
-            session.tick();session.draw();SDL_RenderPresent(renderer);
+            session.tick();if(session.host.state==SessionState::Paused&&!session.error.empty()){model.screen=Screen::Error;model.message=session.error;}session.draw();SDL_RenderPresent(renderer);session.presented();
             nextFrame+=uint64_t(double(SDL_GetPerformanceFrequency())/session.host.av.timing.fps);if(SDL_GetPerformanceCounter()>nextFrame+SDL_GetPerformanceFrequency()/4)nextFrame=SDL_GetPerformanceCounter();
         }else {ui.draw(model,platform.call("status"));SDL_RenderPresent(renderer);SDL_Delay(model.performance?20:4);}
     }

@@ -11,6 +11,8 @@ const address=(op,n)=>{emit(op,0,0);fixups.push([code.length-2,n,false]);};
 label('reset'); emit(0x78,0xd8,0xa2,0xff,0x9a,0xe8,0x8e,0x00,0x20,0x8e,0x01,0x20,0x8e,0x10,0x40);
 label('wait1');emit(0x2c,0x02,0x20);branch(0x10,'wait1');
 label('wait2');emit(0x2c,0x02,0x20);branch(0x10,'wait2');
+// Battery-backed PRG RAM starts with a recognizable value and survives reboot.
+emit(0xad,0x00,0x60);branch(0xd0,'ramReady');emit(0xa9,0x52,0x8d,0x00,0x60);label('ramReady');
 emit(0xa9,0x3f,0x8d,0x06,0x20,0xa9,0,0x8d,0x06,0x20,0xa2,0);
 label('paletteLoop');address(0xbd,'palette');emit(0x8d,0x07,0x20,0xe8,0xe0,32);branch(0xd0,'paletteLoop');
 emit(0xa2,0,0xa9,0xff);label('clearSprites');emit(0x9d,0x00,0x02,0xe8);branch(0xd0,'clearSprites');
@@ -30,6 +32,6 @@ for(const [pos,name,relative] of fixups){const dest=labels.get(name);if(dest===u
 const prg=Buffer.alloc(16384,0xea);Buffer.from(code).copy(prg);
 for(const [offset,name] of [[0x3ffa,'nmi'],[0x3ffc,'reset'],[0x3ffe,'nmi']])prg.writeUInt16LE(labels.get(name),offset);
 const chr=Buffer.alloc(8192);for(let row=0;row<8;row++)chr[16+row]=0xff;
-const header=Buffer.from([0x4e,0x45,0x53,0x1a,1,1,0,0,0,0,0,0,0,0,0,0]);
+const header=Buffer.from([0x4e,0x45,0x53,0x1a,1,1,2,0,0,0,0,0,0,0,0,0]);
 const out=process.argv[2]||'assets/demo/retrotv-pad-test.nes';fs.mkdirSync(path.dirname(out),{recursive:true});fs.writeFileSync(out,Buffer.concat([header,prg,chr]));
 console.log(`Original CC0 NES pad/audio test: ${out} (${16+prg.length+chr.length} bytes)`);

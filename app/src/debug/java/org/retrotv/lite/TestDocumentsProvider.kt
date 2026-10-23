@@ -12,6 +12,8 @@ class TestDocumentsProvider : DocumentsProvider() {
     override fun queryRoots(projection: Array<out String>?): Cursor = MatrixCursor(arrayOf("root_id", "document_id", "title", "flags")).apply { addRow(arrayOf("root", "root", "Synthetic RetroTV test", 0)) }
     private val cols = arrayOf(Document.COLUMN_DOCUMENT_ID, Document.COLUMN_DISPLAY_NAME, Document.COLUMN_MIME_TYPE, Document.COLUMN_SIZE, Document.COLUMN_LAST_MODIFIED)
     override fun queryDocument(documentId: String, projection: Array<out String>?): Cursor = MatrixCursor(cols).apply {
+        if (scenario == "denied") throw SecurityException("Synthetic permission denied")
+        if (scenario == "removed") throw java.io.FileNotFoundException("Synthetic USB removed")
         addRow(arrayOf(documentId, if (documentId == "root") "RetroTV test" else "pad.nes", if (documentId == "root") Document.MIME_TYPE_DIR else "application/octet-stream", 24592L, 1L))
     }
     override fun queryChildDocuments(parentDocumentId: String, projection: Array<out String>?, sortOrder: String?): Cursor {

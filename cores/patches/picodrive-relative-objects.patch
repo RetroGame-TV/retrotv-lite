@@ -1,0 +1,10 @@
+diff --git a/jni/Android.mk b/jni/Android.mk
+index 95db209..3ccdb39 100644
+--- a/jni/Android.mk
++++ b/jni/Android.mk
+@@ -147,4 +147,5 @@ ifeq ($(TARGET_ARCH_ABI),armeabi-v7a)
+   LOCAL_ARM_NEON := true
+ endif
+ 
++LOCAL_SRC_FILES := $(patsubst $(LOCAL_PATH)/%,%,$(LOCAL_SRC_FILES))
+ include $(BUILD_SHARED_LIBRARY)

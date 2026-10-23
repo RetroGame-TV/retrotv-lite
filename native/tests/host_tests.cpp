@@ -18,9 +18,12 @@ int main(int argc,char**argv){
         h.buttons[0][RETRO_DEVICE_ID_JOYPAD_RIGHT]=1;for(int i=0;i<120;++i)h.run();check(first!=last,"controller did not alter rendered frame");check(h.unserialize(snapshot),"real core restore failed");
         h.buttons[1][RETRO_DEVICE_ID_JOYPAD_A]=1;h.reset();h.run();check(frames>=241&&samples>1000,"missing video/audio callbacks");
         SaveStore store(argv[3],"game:crc","QuickNES:pin");store.write(true,snapshot);check(store.read(true)==snapshot,"save roundtrip");
+        auto ram=h.sram();check(!ram.empty(),"battery-backed SRAM unavailable");ram[0]=0x5a;check(h.setSram(ram),"SRAM write rejected");store.write(false,ram);check(store.read(false)==ram,"SRAM disk roundtrip failed");
+        h.close();check(h.open(argv[1],argv[2],rom,".","."),"SRAM reopen failed");check(h.setSram(store.read(false)),"SRAM restore rejected");for(int i=0;i<5;++i)h.run();check(h.sram()[0]==0x5a,"SRAM did not survive core reopen");
         auto changed=snapshot;changed[0]^=1;store.write(true,changed);check(std::filesystem::exists(store.path(true)+".prev"),"no recovery backup");
         bool rejected=false;try{SaveStore wrong(argv[3],"different-game","QuickNES:pin");wrong.read(true);}catch(...){rejected=true;}check(rejected,"wrong content accepted");
         auto corrupt=readBounded(store.path(true));corrupt.back()^=1;atomicWrite(store.path(true),corrupt);rejected=false;try{store.read(true);}catch(...){rejected=true;}check(rejected,"corrupt payload accepted");
+        auto validBackup=readBounded(store.path(true)+".prev");store.write(true,snapshot);check(readBounded(store.path(true)+".prev")==validBackup,"corrupt current destroyed valid backup");check(std::filesystem::exists(store.path(true)+".rejected"),"corrupt save not preserved");
         h.close();check(h.state==SessionState::Menu,"did not return to menu");
         for(int i=0;i<10;++i){check(h.open(argv[1],argv[2],rom,".","."),"reopen failed");h.run();h.close();}
         std::cout<<"REAL QuickNES: 241+ frames, audio, input, pause/resume, reset, states, 10 reopen cycles passed. Save integrity/backup/mismatch tests passed.\n";

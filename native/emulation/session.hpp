@@ -20,6 +20,7 @@ class Session {
     uint32_t started=0,lastFlush=0;
     uint64_t playedMs=0;uint32_t lastActive=0;
     std::vector<double> times;
+    std::vector<double> frameTimes;uint64_t lastPresented=0;
 public:
     Host host;
     Game game;
@@ -27,12 +28,13 @@ public:
     unsigned frames=0,underruns=0,overruns=0;
     double loadMs=0;
     bool stretch=false;
+    void invalidateFrame(){if(frame)SDL_DestroyTexture(frame);frame=nullptr;}
     explicit Session(SDL_Renderer* r):renderer(r){}
     ~Session(){release();}
     void release(){host.close();host.audio={};host.video={};host.vfs=nullptr;vfs.reset();saves.reset();if(stream)SDL_FreeAudioStream(stream);stream=nullptr;if(device)SDL_CloseAudioDevice(device);device=0;if(frame)SDL_DestroyTexture(frame);frame=nullptr;width=height=0;}
     bool active() const {return host.state==SessionState::Running||host.state==SessionState::Paused;}
     bool launch(Game g,Platform& platform,bool resume){
-        release();error.clear();uint64_t before=SDL_GetPerformanceCounter();game=std::move(g);frames=underruns=overruns=0;times.clear();
+        release();error.clear();uint64_t before=SDL_GetPerformanceCounter();game=std::move(g);stretch=platform.call("setting","aspect-"+game.id)=="wide";frames=underruns=overruns=0;times.clear();frameTimes.clear();lastPresented=0;
         try {
             const bool disc=game.system=="PlayStation";
             const bool streamed=disc||game.system=="Arcade";
@@ -79,12 +81,13 @@ public:
         }catch(const std::exception& e){error=e.what();release();return false;}
     }
     void pause(){if(host.state==SessionState::Running)playedMs+=SDL_GetTicks()-lastActive;host.pause();if(device){SDL_PauseAudioDevice(device,1);SDL_ClearQueuedAudio(device);}}
-    void resume(){lastActive=SDL_GetTicks();host.resume();if(device)SDL_PauseAudioDevice(device,0);}
+    void resume(){lastActive=SDL_GetTicks();lastPresented=0;host.resume();if(device)SDL_PauseAudioDevice(device,0);}
     bool save(bool snapshot){try{if(!saves)return false;auto ram=host.sram();if(!ram.empty())saves->write(false,ram);if(snapshot){auto state=host.serialize();if(state.empty())throw std::runtime_error("Núcleo não suporta save state");saves->write(true,state);}return true;}catch(const std::exception& e){error=e.what();return false;}}
     bool load(){try{if(!saves)return false;auto current=host.sram();if(!current.empty())saves->write(false,current);auto state=saves->read(true);if(!host.unserialize(state))throw std::runtime_error("Estado recusado pelo núcleo");if(!current.empty())host.setSram(current);return true;}catch(const std::exception& e){error=e.what();return false;}}
     void finish(Platform& p){if(!active())return;pause();save(true);p.call("request","record\t"+game.id+"\t"+std::to_string(playedMs/1000));release();}
-    void tick(){auto start=SDL_GetPerformanceCounter();host.run();++frames;if(device&&SDL_GetQueuedAudioSize(device)==0)++underruns;times.push_back(1000.0*double(SDL_GetPerformanceCounter()-start)/SDL_GetPerformanceFrequency());if(times.size()>600)times.erase(times.begin());if(SDL_GetTicks()-lastFlush>10000){save(false);lastFlush=SDL_GetTicks();}}
+    void tick(){auto start=SDL_GetPerformanceCounter();host.run();++frames;if(vfs&&vfs->ioFailed){pause();error="Erro de leitura/seek USB. Reconecte e reabra o jogo.\nSRAM e biblioteca permanecem preservados.";}if(device&&SDL_GetQueuedAudioSize(device)==0)++underruns;times.push_back(1000.0*double(SDL_GetPerformanceCounter()-start)/SDL_GetPerformanceFrequency());if(times.size()>600)times.erase(times.begin());if(SDL_GetTicks()-lastFlush>10000){save(false);lastFlush=SDL_GetTicks();}}
     void draw(){SDL_SetRenderDrawColor(renderer,0,0,0,255);SDL_RenderClear(renderer);if(frame){SDL_Rect dst=stretch?SDL_Rect{0,0,1280,720}:SDL_Rect{160,0,960,720};SDL_RenderCopy(renderer,frame,nullptr,&dst);}}
-    std::string metrics()const{double ms=0;for(auto v:times)ms+=v;auto sorted=times;std::sort(sorted.begin(),sorted.end());return "Frames: "+std::to_string(frames)+"\nCusto retro_run médio: "+std::to_string(times.empty()?0:ms/times.size())+" ms\np95 retro_run: "+std::to_string(sorted.empty()?0:sorted[size_t((sorted.size()-1)*0.95)])+" ms\nÁudio underruns: "+std::to_string(underruns)+" / overruns: "+std::to_string(overruns)+"\nCarga: "+std::to_string(loadMs)+" ms";}
+    void presented(){auto now=SDL_GetPerformanceCounter();if(lastPresented){frameTimes.push_back(1000.0*double(now-lastPresented)/SDL_GetPerformanceFrequency());if(frameTimes.size()>600)frameTimes.erase(frameTimes.begin());}lastPresented=now;}
+    std::string metrics()const{double ms=0;for(auto v:times)ms+=v;auto sorted=frameTimes;std::sort(sorted.begin(),sorted.end());auto elapsed=playedMs+(host.state==SessionState::Running?SDL_GetTicks()-lastActive:0);return "FPS da sessão local: "+std::to_string(elapsed?frames*1000.0/elapsed:0)+"\nFrametime p50 / p95: "+std::to_string(sorted.empty()?0:sorted[sorted.size()/2])+" / "+std::to_string(sorted.empty()?0:sorted[size_t((sorted.size()-1)*0.95)])+" ms\nCusto retro_run médio: "+std::to_string(times.empty()?0:ms/times.size())+" ms\nÁudio underruns / overruns: "+std::to_string(underruns)+" / "+std::to_string(overruns)+"\nCarga: "+std::to_string(loadMs)+" ms\nNúcleo: "+host.coreIdentity;}
 };
 }

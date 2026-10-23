@@ -10,6 +10,9 @@ import android.os.Bundle
 import java.nio.ByteBuffer
 import android.app.Activity
 import android.content.Intent
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.IntentFilter
 import android.content.ActivityNotFoundException
 import android.net.Uri
 import android.os.Debug
@@ -27,11 +30,27 @@ class RetroActivity : SDLActivity() {
     private val transfers = Executors.newSingleThreadExecutor()
     private val transferBusy = AtomicBoolean(false)
     private val discAccess by lazy { DiscAccess(contentResolver) }
+    private val mediaEvents = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            val tree = prefs.getString("tree", null)?.let { Uri.parse(it) } ?: return
+            if (intent?.action == Intent.ACTION_MEDIA_MOUNTED) library.scan(tree)
+            else library.validate(tree)
+        }
+    }
+    private var mediaRegistered = false
     override fun getLibraries(): Array<String> = arrayOf("SDL2", "main")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.decorView.systemUiVisibility = 5894
         library.status = if (prefs.contains("tree")) "Catálogo salvo · USB a verificar" else "Escolha sua biblioteca USB"
+        val filter = IntentFilter().apply {
+            addAction(Intent.ACTION_MEDIA_MOUNTED); addAction(Intent.ACTION_MEDIA_UNMOUNTED)
+            addAction(Intent.ACTION_MEDIA_EJECT); addAction(Intent.ACTION_MEDIA_REMOVED); addAction(Intent.ACTION_MEDIA_BAD_REMOVAL)
+            addDataScheme("file")
+        }
+        if (android.os.Build.VERSION.SDK_INT >= 33) registerReceiver(mediaEvents, filter, Context.RECEIVER_NOT_EXPORTED)
+        else registerReceiver(mediaEvents, filter)
+        mediaRegistered = true
     }
     fun fontAtlas(): ByteArray {
         val bitmap = Bitmap.createBitmap(1024, 896, Bitmap.Config.ARGB_8888)
@@ -41,7 +60,7 @@ class RetroActivity : SDLActivity() {
         }
         for (code in 32..255) {
             val i = code - 32
-            canvas.drawText(code.toChar().toString(), (i % 16 * 64).toFloat(), (i / 16 * 64 + 36).toFloat(), paint)
+            canvas.drawText(code.toChar().toString(), (i % 16 * 64 + 4).toFloat(), (i / 16 * 64 + 36).toFloat(), paint)
         }
         val bytes = ByteBuffer.allocate(bitmap.byteCount)
         bitmap.copyPixelsToBuffer(bytes); bitmap.recycle()
@@ -142,5 +161,9 @@ class RetroActivity : SDLActivity() {
             }
         }
     }
-    override fun onDestroy() { library.close(); super.onDestroy(); transfers.shutdown(); database.close() }
+    override fun onResume() {
+        super.onResume()
+        prefs.getString("tree", null)?.let { library.validate(Uri.parse(it)) }
+    }
+    override fun onDestroy() { if (mediaRegistered) unregisterReceiver(mediaEvents); library.close(); super.onDestroy(); transfers.shutdown(); database.close() }
 }

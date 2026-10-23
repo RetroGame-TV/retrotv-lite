@@ -28,7 +28,7 @@ class Vfs {
 #ifdef _WIN32
         if(_fseeki64(h->file,offset,whence)!=0)return -1;return _ftelli64(h->file);
 #else
-        if(fseeko(h->file,offset,whence)!=0)return -1;return ftello(h->file);
+        if(fseeko(h->file,offset,whence)!=0){if(active)active->ioFailed=true;return -1;}return ftello(h->file);
 #endif
     }
     static int64_t tell(retro_vfs_file_handle* h){return seek(h,0,RETRO_VFS_SEEK_POSITION_CURRENT);}
@@ -37,11 +37,12 @@ class Vfs {
     static int close(retro_vfs_file_handle* h){if(!h)return -1;auto ret=std::fclose(h->file);delete h;return ret;}
 public:
     std::function<int(const std::string&)> openRead;
+    bool ioFailed=false;
     retro_vfs_interface table{};
     Vfs(){
         active=this;table.get_path=[](retro_vfs_file_handle* h){return h?h->path.c_str():nullptr;};
         table.open=open;table.close=close;table.size=size;table.tell=tell;table.seek=seek;
-        table.read=[](retro_vfs_file_handle* h,void* dst,uint64_t n)->int64_t{if(!h||n>SIZE_MAX)return -1;auto got=std::fread(dst,1,size_t(n),h->file);return got==0&&std::ferror(h->file)?-1:int64_t(got);};
+        table.read=[](retro_vfs_file_handle* h,void* dst,uint64_t n)->int64_t{if(!h||n>SIZE_MAX)return -1;auto got=std::fread(dst,1,size_t(n),h->file);if(got==0&&std::ferror(h->file)){if(active)active->ioFailed=true;return -1;}return int64_t(got);};
         table.write=[](retro_vfs_file_handle*,const void*,uint64_t)->int64_t{return -1;};table.flush=[](retro_vfs_file_handle*){return 0;};
         table.remove=[](const char*){return -1;};table.rename=[](const char*,const char*){return -1;};table.truncate=[](retro_vfs_file_handle*,int64_t)->int64_t{return -1;};
         table.stat=stat;table.mkdir=[](const char*){return -1;};table.opendir=[](const char*,bool)->retro_vfs_dir_handle*{return nullptr;};table.readdir=[](retro_vfs_dir_handle*){return false;};table.dirent_get_name=[](retro_vfs_dir_handle*)->const char*{return nullptr;};table.dirent_is_dir=[](retro_vfs_dir_handle*){return false;};table.closedir=[](retro_vfs_dir_handle*){return -1;};

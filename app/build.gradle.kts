@@ -13,7 +13,7 @@ android {
         versionName = "0.1.0-dev"
         ndk { abiFilters += (testAbi ?: "armeabi-v7a") }
         externalNativeBuild { cmake { cppFlags += listOf("-std=c++17", "-Wall", "-Wextra"); arguments += "-DANDROID_STL=c++_shared" } }
-        testInstrumentationRunner = "android.test.InstrumentationTestRunner"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     externalNativeBuild { cmake { path = file("../native/CMakeLists.txt"); version = "3.22.1" } }
     sourceSets["main"].java.srcDir("../third_party/SDL/android-project/app/src/main/java")
@@ -26,4 +26,8 @@ android {
     buildTypes { release { isMinifyEnabled = false } }
     lint { abortOnError = true; lintConfig = file("lint.xml"); disable += "ExpiredTargetSdkVersion" }
 }
-dependencies { testImplementation("junit:junit:4.13.2") }
+dependencies {
+    testImplementation("junit:junit:4.13.2")
+    androidTestImplementation("androidx.test:runner:1.6.2")
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
+}

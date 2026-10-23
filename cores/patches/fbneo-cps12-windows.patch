@@ -1,5 +1,5 @@
 diff --git a/src/burner/libretro/jni/Android.mk b/src/burner/libretro/jni/Android.mk
-index edba6fe..940ade1 100644
+index edba6fe..1f106a5 100644
 --- a/src/burner/libretro/jni/Android.mk
 +++ b/src/burner/libretro/jni/Android.mk
 @@ -34,14 +34,15 @@ SOURCES_CXX :=
@@ -20,3 +20,9 @@ index edba6fe..940ade1 100644
  LOCAL_C_INCLUDES   := $(INCLUDE_DIRS)
  LOCAL_CFLAGS       := $(CFLAGS) $(COMMON_FLAGS)
  LOCAL_CPPFLAGS     := $(CXXFLAGS) $(COMMON_FLAGS)
+@@ -57,4 +58,5 @@ ifeq ($(TARGET_ARCH_ABI),armeabi-v7a)
+   LOCAL_ARM_NEON := true
+ endif
+ 
++LOCAL_SRC_FILES := $(patsubst $(LOCAL_PATH)/%,%,$(LOCAL_SRC_FILES))
+ include $(BUILD_SHARED_LIBRARY)

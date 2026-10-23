@@ -21,7 +21,7 @@ struct Theme {
 };
 struct Model {
     Screen screen = Screen::Library;
-    int tab = 0, selection = 0, option = 0;
+    int tab = 0, selection = 0, option = 0, lastContentTab = 0;
     bool sidebar = true, performance = false, minimal = false;
     std::array<int,10> positions{};
     std::vector<Game> games;
@@ -39,11 +39,11 @@ struct Model {
         return out;
     }
     Game* selected() { auto rows=visible(); if(rows.empty()) return nullptr; selection=std::clamp(selection,0,int(rows.size()-1)); return &games[rows[selection]]; }
-    void selectTab(int value) { positions[tab]=selection; tab=std::clamp(value,0,9); selection=positions[tab]; if(tab==9) { screen=Screen::Settings; option=0; } }
+    void selectTab(int value) { positions[tab]=selection; tab=std::clamp(value,0,9); selection=positions[tab]; if(tab==9) { screen=Screen::Settings; option=0; } else lastContentTab=tab; }
     void navigate(Action a) {
         if(screen==Screen::Error) { if(a==Action::Back||a==Action::Ok) screen=Screen::Library; return; }
         if(screen==Screen::Details) { if(a==Action::Back) screen=Screen::Library; else if(a==Action::Up) option=std::max(0,option-1); else if(a==Action::Down) option=std::min(3,option+1); return; }
-        if(screen!=Screen::Library) { if(a==Action::Back) { screen=Screen::Library; sidebar=true; } return; }
+        if(screen!=Screen::Library) { if(a==Action::Back) { screen=Screen::Library; sidebar=true; if(tab==9)selectTab(lastContentTab); } return; }
         if(a==Action::Menu) { screen=Screen::Settings; option=0; return; }
         if(sidebar) {
             if(a==Action::Up) selectTab(tab-1);

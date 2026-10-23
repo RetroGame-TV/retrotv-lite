@@ -10,6 +10,7 @@ class UI {
 public:
     Theme theme=Theme::classic();
     UI(SDL_Renderer* r,SDL_Texture* a,const std::string& metrics):renderer(r),atlas(a){advances.fill(16);std::istringstream input(metrics);std::string value;size_t i=0;while(i<advances.size()&&std::getline(input,value,','))advances[i++]=std::max(1,std::atoi(value.c_str()));}
+    void setAtlas(SDL_Texture* texture){atlas=texture;}
     void color(uint32_t c) { SDL_SetRenderDrawColor(renderer,(c>>16)&255,(c>>8)&255,c&255,255); }
     void rect(int x,int y,int w,int h,uint32_t c) { color(c); SDL_Rect box{x,y,w,h}; SDL_RenderFillRect(renderer,&box); }
     void text(int x,int y,const std::string& s,int size=24,uint32_t c=0) {
@@ -21,7 +22,7 @@ public:
             if((ch&0xe0)==0xc0 && i<s.size()) ch=((ch&31)<<6)|(static_cast<unsigned char>(s[i++])&63);
             else if(ch>=0xe0) { while(i<s.size() && (static_cast<unsigned char>(s[i])&0xc0)==0x80)++i; ch='?'; }
             if(ch<32||ch>255)ch='?'; unsigned index=ch-32;
-            SDL_Rect src{int(index%16)*64,int(index/16)*64,64,64},dst{x,y,size*2,size*2};
+            SDL_Rect src{int(index%16)*64+4,int(index/16)*64,60,64},dst{x,y,int(size*60/32.0),size*2};
             SDL_RenderCopy(renderer,atlas,&src,&dst); x+=int(std::ceil(advances[index]*size/32.0))+1; ++count;
         }
     }

@@ -1,0 +1,45 @@
+name: Android TV ARMv7 and native tests
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - run: cmake -S native -B build/native -DRETROTV_TESTS=ON -DCMAKE_BUILD_TYPE=Debug
+      - run: cmake --build build/native -j2
+      - run: ctest --test-dir build/native --output-on-failure
+  android:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+      - run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0' 'ndk;26.3.11579264' 'cmake;3.22.1'
+      - name: Build optional GPL PS1 core from pinned sources
+        shell: pwsh
+        run: ./scripts/build-cores.ps1 -Sdk $env:ANDROID_HOME -Core pcsx_rearmed
+      - run: bash ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleDebug :app:assembleRelease --console=plain
+      - uses: actions/upload-artifact@v4
+        with:
+          name: retrotv-armv7-development
+          path: |
+            app/build/outputs/apk/debug/*.apk
+            app/build/outputs/apk/release/*.apk
+            app/build/reports/tests/
+            app/build/reports/lint-results-debug.html
+            cores/registry.json
+            docs/licenses.md
+      # Workflow is prepared locally. A green GitHub Actions run is not claimed.

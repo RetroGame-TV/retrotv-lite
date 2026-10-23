@@ -17,6 +17,19 @@ class UsbLibraryProvider(private val context: Context, private val db: LibraryDa
     val generation = AtomicLong(1)
     @Volatile var status = "Nenhuma pasta selecionada"
     fun cancel() { cancelled.set(true) }
+    fun validate(tree: Uri) {
+        executor.execute {
+            try {
+                val doc = DC.buildDocumentUriUsingTree(tree, DC.getTreeDocumentId(tree))
+                context.contentResolver.query(doc, arrayOf(DC.Document.COLUMN_DOCUMENT_ID), null, null, null)?.use { require(it.moveToFirst()) { "USB ausente" } } ?: error("USB ausente")
+                if (!scanning.get()) status = "USB disponível · atualize se alterou arquivos"
+            } catch (e: Exception) {
+                db.treeUnavailable(tree.toString())
+                status = if (e is SecurityException) "Permissão perdida: selecione a pasta" else "USB ausente: reconecte e atualize a biblioteca"
+                generation.incrementAndGet()
+            }
+        }
+    }
     fun scan(tree: Uri) {
         if (!scanning.compareAndSet(false, true)) { cancel(); status = "Cancelando leitura USB"; return }
         cancelled.set(false)
