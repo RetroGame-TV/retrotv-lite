@@ -5,16 +5,18 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 
-class LibraryDatabase(context: Context, name: String = "catalog.db") : SQLiteOpenHelper(context, name, null, 2) {
+class LibraryDatabase(context: Context, name: String = "catalog.db") : SQLiteOpenHelper(context, name, null, 3) {
     override fun onCreate(db: SQLiteDatabase) {
         db.execSQL("CREATE TABLE games(id TEXT PRIMARY KEY, tree TEXT NOT NULL, uri TEXT NOT NULL, title TEXT NOT NULL, system TEXT NOT NULL, core TEXT NOT NULL, favorite INTEGER NOT NULL DEFAULT 0, recent INTEGER NOT NULL DEFAULT 0, played INTEGER NOT NULL DEFAULT 0, available INTEGER NOT NULL DEFAULT 1, scan TEXT NOT NULL, size INTEGER NOT NULL DEFAULT 0, modified INTEGER NOT NULL DEFAULT 0)")
         db.execSQL("CREATE INDEX collection ON games(system, title)")
         db.execSQL("CREATE INDEX roots ON games(tree, scan)")
         db.execSQL("ALTER TABLE games ADD COLUMN relative TEXT NOT NULL DEFAULT ''")
+        db.execSQL("ALTER TABLE games ADD COLUMN cover TEXT NOT NULL DEFAULT ''")
     }
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        if (oldVersion == 1 && newVersion == 2) db.execSQL("ALTER TABLE games ADD COLUMN relative TEXT NOT NULL DEFAULT ''")
-        else error("Unsupported database migration $oldVersion -> $newVersion; preserve catalog.db")
+        require(oldVersion in 1..2 && newVersion == 3) { "Unsupported database migration $oldVersion -> $newVersion; preserve catalog.db" }
+        if (oldVersion < 2) db.execSQL("ALTER TABLE games ADD COLUMN relative TEXT NOT NULL DEFAULT ''")
+        if (oldVersion < 3) db.execSQL("ALTER TABLE games ADD COLUMN cover TEXT NOT NULL DEFAULT ''")
     }
     fun upsert(v: ContentValues) {
         // Updating preserves favorites, history and played time. Never REPLACE the row.
@@ -22,9 +24,9 @@ class LibraryDatabase(context: Context, name: String = "catalog.db") : SQLiteOpe
         if (db.update("games", v, "id=?", arrayOf(v.getAsString("id"))) == 0) db.insertOrThrow("games", null, v)
     }
     fun snapshot(): String = buildString {
-        readableDatabase.rawQuery("SELECT id,title,system,uri,core,favorite,recent,played,available FROM games ORDER BY title COLLATE NOCASE LIMIT 10000", null).use { c ->
+        readableDatabase.rawQuery("SELECT id,title,system,uri,core,favorite,recent,played,available,cover FROM games ORDER BY title COLLATE NOCASE LIMIT 10000", null).use { c ->
             while (c.moveToNext()) {
-                append((0..8).joinToString("\t") { index ->
+                append((0..9).joinToString("\t") { index ->
                     val value = c.getString(index) ?: ""
                     if (index == 1) CatalogRules.clean(value) else value.replace('\t', ' ').replace('\n', ' ').replace('\r', ' ')
                 }); append('\n')

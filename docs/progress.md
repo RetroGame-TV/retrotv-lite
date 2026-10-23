@@ -64,4 +64,12 @@ Entrega fora da árvore do código: APK debug instalável, APK release sem assin
 
 ## F7 e escopo restante
 
-Adiado conforme gate do plano: scraper opt-in, perfis de usuário, previews e personalização avançada exigem primeiro fluxo principal comprovado no hardware. Também não foram concluídos editor avançado de perfil por jogo/console, capas locais/LRU de imagens, reconhecimento universal de gamepads nem teste físico dos consoles adicionais. A versão é **0.1.0-dev**, não 1.0 completa/validada. Prioridade seguinte é executar `docs/test-on-philco.md` com arquivos legais do proprietário.
+Adiado conforme gate do plano: scraper opt-in, perfis de usuário, previews em vídeo e personalização avançada exigem primeiro fluxo principal comprovado no hardware. Também não foram concluídos editor avançado de perfil por jogo/console, reconhecimento universal de gamepads nem teste físico dos consoles adicionais. A versão de desenvolvimento não é 1.0 completa/validada. Prioridade seguinte é executar `docs/test-on-philco.md` com arquivos legais do proprietário.
+
+## Revisão visual · 0.2.0-dev
+
+Solicitação posterior do usuário antecipou a direção visual. Barra lateral e listas sólidas substituídas por navegação superior, galeria de seis capas, foco elevado, fundo contextual discreto e detalhes com capa. Minimal recebe lista monocromática e desenho original de console. Ajustes, pausa, confirmação, diagnóstico e estado vazio seguem a mesma linguagem. Banner Android atualizado.
+
+Capas locais PNG/JPEG/WebP via SAF, worker e caches limitados implementados. Banco migra v1/v2→v3 sem substituir linhas, favoritos, histórico ou caminhos. Núcleo, SRAM e protocolo de save state permanecem os mesmos. Ilustrações e cartazes de teste são originais; referência Delta usada apenas para análise visual.
+
+Comandos desta revisão: Gradle x86 `:app:assembleDebug :app:assembleDebugAndroidTest -PtestAbi=x86`; AndroidJUnitRunner; host `cmake --build`/`ctest`; Gradle ARMv7 `:app:assembleDebug :app:testDebugUnitTest :app:lintDebug :app:assembleRelease`. Builds passaram, lint 0 erros, JUnit 7/7, CTest 3/3 e Android 4/4. Auditoria ARMv7 e assinatura debug v2 passaram. Capturas reais incluem Galeria, Minimal, detalhes, ajustes e pausa. Veja `visual-validation-0.2.0.md`; logs e screenshots acompanham `outputs/evidence/design-0.2.0/` na entrega. A Philco física continua pendente.

@@ -1,8 +1,8 @@
 # RetroTV Lite
 
-App Android TV nativo C++17/SDL2/GLES2 + Kotlin/SAF, destinado à Philco PTV40G71AGBL (Android 11, **ARMv7 de 32 bits**). Interface original, offline e navegável por controle remoto. Versão de desenvolvimento **0.1.0-dev**; não é release 1.0 certificada.
+App Android TV nativo C++17/SDL2/GLES2 + Kotlin/SAF, destinado à Philco PTV40G71AGBL (Android 11, **ARMv7 de 32 bits**). Interface original, offline e navegável por controle remoto. Versão de desenvolvimento **0.2.0-dev**; não é release 1.0 certificada.
 
-Inclui biblioteca SQLite, pastas SAF, favoritos/recentes, Classic/Minimal, modo performance, host Libretro, menu rápido, SRAM, save states/Quick Resume condicionais, backup/restore validado e controles com dois slots/remapeamento. Demo NES original CC0 permite testar o fluxo sem obter ROM comercial.
+Inclui biblioteca SQLite, pastas SAF, favoritos/recentes, Galeria com capas locais/Minimal monocromático, modo performance, host Libretro, menu rápido, SRAM, save states/Quick Resume condicionais, backup/restore validado e controles com dois slots/remapeamento. Demo NES original CC0 permite testar o fluxo sem obter ROM comercial. Para usar capas: `Nome do jogo.png` (ou jpg/jpeg/webp) ao lado da ROM com o mesmo nome base; atualizar biblioteca após mudanças. Veja [especificação visual](docs/ui-spec.md).
 
 **Validação e limitações:** leia [docs/progress.md](docs/progress.md) e [matriz dos cores](docs/core-compatibility.md). O APK ARMv7 compila; demo NES foi executada no Windows e Android TV virtual **x86**. Não houve instalação na Philco, teste de Bluetooth/USB físico nem execução de jogos SNES/Mega Drive/Arcade/PS1. N64 está desabilitado; Wii está fora do escopo. Scraper, perfis de usuário e editor avançado de perfil por jogo não foram implementados.
 

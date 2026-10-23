@@ -30,6 +30,7 @@ class RetroActivity : SDLActivity() {
     private val transfers = Executors.newSingleThreadExecutor()
     private val transferBusy = AtomicBoolean(false)
     private val discAccess by lazy { DiscAccess(contentResolver) }
+    private val artwork by lazy { CoverRepository(contentResolver) }
     private val mediaEvents = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             val tree = prefs.getString("tree", null)?.let { Uri.parse(it) } ?: return
@@ -53,13 +54,14 @@ class RetroActivity : SDLActivity() {
         mediaRegistered = true
     }
     fun fontAtlas(): ByteArray {
-        val bitmap = Bitmap.createBitmap(1024, 896, Bitmap.Config.ARGB_8888)
+        val bitmap = Bitmap.createBitmap(1024, 1792, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
         val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.WHITE; textSize = 30f; typeface = Typeface.create("sans-serif", Typeface.NORMAL)
         }
-        for (code in 32..255) {
-            val i = code - 32
+        for (weight in 0..1) for (code in 32..255) {
+            paint.typeface = Typeface.create("sans-serif", if (weight == 1) Typeface.BOLD else Typeface.NORMAL)
+            val i = code - 32 + weight * 224
             canvas.drawText(code.toChar().toString(), (i % 16 * 64 + 4).toFloat(), (i / 16 * 64 + 36).toFloat(), paint)
         }
         val bytes = ByteBuffer.allocate(bitmap.byteCount)
@@ -68,9 +70,14 @@ class RetroActivity : SDLActivity() {
     }
     fun fontMetrics(value: String): String {
         val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { textSize = 30f; typeface = Typeface.create("sans-serif", Typeface.NORMAL) }
-        return (32..255).joinToString(",") { kotlin.math.ceil(paint.measureText(it.toChar().toString()).toDouble()).toInt().toString() }
+        return (0..1).flatMap { weight ->
+            paint.typeface = Typeface.create("sans-serif", if (weight == 1) Typeface.BOLD else Typeface.NORMAL)
+            (32..255).map { paint.measureText(it.toChar().toString()).toString() }
+        }.joinToString(",")
     }
-    fun status(value: String): String = library.status
+    fun cover(uri: String): ByteArray? = artwork.poll(uri)
+    fun clearArtwork(value: String): String { artwork.invalidate(); return "OK" }
+    fun status(value: String): String = if (prefs.getString("tree", "")?.contains("org.retrotv.lite.testdocs") == true) "Acervo de demonstração · homebrew original" else library.status
     fun catalog(value: String): String = database.snapshot()
     fun revision(value: String): String = library.generation.get().toString()
     fun setting(value: String): String {
@@ -165,5 +172,5 @@ class RetroActivity : SDLActivity() {
         super.onResume()
         prefs.getString("tree", null)?.let { library.validate(Uri.parse(it)) }
     }
-    override fun onDestroy() { if (mediaRegistered) unregisterReceiver(mediaEvents); library.close(); super.onDestroy(); transfers.shutdown(); database.close() }
+    override fun onDestroy() { if (mediaRegistered) unregisterReceiver(mediaEvents); library.close(); artwork.close(); super.onDestroy(); transfers.shutdown(); database.close() }
 }

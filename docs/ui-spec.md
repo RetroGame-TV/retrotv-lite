@@ -1,7 +1,29 @@
-# Interface original
+# Interface original · 0.2.0
 
-1280x720 lógico, margem 40px. Sidebar 230px, conteúdo a partir de x312. Fundo sólido, acento verde, foco com preenchimento de alto contraste. Tipografia do sistema renderizada uma vez num atlas de 1024x896 (3,5 MiB); não inclui fonte redistribuída.
+Direção revisada a pedido do usuário: biblioteca centrada nas capas, inspirada na organização e sobriedade do [Delta](https://github.com/rileytestut/Delta) e em seu [press kit oficial](https://faq.deltaemulator.com/about/press-kit). As duas referências fornecidas também orientaram o carrossel e o modo monocromático. Nenhum código, screenshot, fonte, marca de console ou asset desses produtos foi incorporado ao aplicativo.
 
-Classic e Minimal compartilham hierarquia e tamanho dos alvos. Performance elimina transições e reduz orçamento de cache para 2 MiB. Lista virtualiza cinco itens visíveis e não carrega capas grandes. Sem capas protegidas ou vídeo de fundo. Detalhes preservam jogo e aba ao voltar. Estados vazios explicam escolha da pasta.
+1280×720 lógico, margem segura de 54–60 px. Fundo carvão, texto branco, acento violeta e alvos arredondados. Barra superior reúne coleções e sistemas. A capa selecionada sobe, ganha contorno contrastante e um símbolo de reprodução; a mesma textura recebe tratamento escurecido no fundo. A rolagem interpola a posição apenas no modo Galeria. Menu de detalhes mantém a capa visível e separa ações. Ajustes e pausa usam uma coluna de contexto e outra de ações.
 
-Sidebar: Início, Continuar, Recentes, Favoritos, sistemas, Configurações. Menu abre configurações de qualquer aba. Voltar sempre retorna ao contexto anterior.
+Minimal troca a galeria por lista monocromática e ilustração original de console/controle. Não carrega imagens nem anima o carrossel; Performance usa essa mesma apresentação econômica. O estado vazio contém duas ações reais: selecionar a pasta SAF e executar o teste original de controle. Não há títulos comerciais fictícios apresentados como biblioteca instalada.
+
+## Navegação
+
+- Barra superior: esquerda/direita muda coleção; baixo ou OK entra no conteúdo. Menu abre ajustes em qualquer coleção.
+- Galeria: esquerda/direita percorre capas; cima ou Voltar retorna à barra; OK abre o jogo.
+- Minimal: cima/baixo percorre os jogos; cima no primeiro item, esquerda ou Voltar retorna à barra; OK abre o jogo.
+- Listas de ajustes, pausa e detalhes: cima/baixo e OK; Voltar recupera o contexto.
+- A posição de cada coleção, favoritos, saves e histórico permanecem preservados.
+
+## Capas locais e limites
+
+Na mesma pasta: `Meu jogo.nes` + `Meu jogo.png` (também jpg/jpeg/webp, extensão e nome sem distinção de maiúsculas). A leitura SAF associa o nome base ao jogo; não baixa imagens e não abre ROMs para procurar arte. Após alterar a capa, atualizar a biblioteca.
+
+Decodificação em worker único, amostragem máxima aproximada de 512 px, saída fixa 192×256 RGBA com proporção preservada. Limites: arquivo até 12 MiB, imagem até 32 milhões de pixels, oito tarefas pendentes, oito buffers prontos (~1,5 MiB), seis texturas de capa (~1,13 MiB). Erros limitados a 128 URIs e invalidados no próximo reload do catálogo. Imagens inválidas ou indisponíveis usam cartaz original com ícone vetorial. Minimal/Performance liberam as texturas; evento de pouca memória também limpa o cache.
+
+Atlas de fonte Android regular/negrito: 1024×1792 RGBA (~7 MiB), criado uma vez, sem arquivo de fonte redistribuído. Renderização SDL2/OpenGL ES 2; sem WebView, vídeo de fundo, shader novo ou dependência de rede.
+
+## Evidência visual
+
+Capturas da revisão são produzidas pelo renderer do APK em Android TV 11 x86 virtual. Para mostrar uma biblioteca preenchida, um teste opcional protegido por argumento `preview=1` cria seis cartazes geométricos originais associados ao mesmo homebrew de controle CC0. O rodapé identifica esse acervo como demonstração. O teste recusa catálogos com jogos preexistentes. Esses cartazes não são ROMs comerciais e o catálogo de preview não acompanha o APK instalado normalmente.
+
+Legibilidade a distância, fluidez e consumo na Philco real ainda precisam de validação física.

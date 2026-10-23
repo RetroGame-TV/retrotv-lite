@@ -9,8 +9,8 @@ android {
         applicationId = "org.retrotv.lite"
         minSdk = 26
         targetSdk = 32
-        versionCode = 1
-        versionName = "0.1.0-dev"
+        versionCode = 2
+        versionName = "0.2.0-dev"
         ndk { abiFilters += (testAbi ?: "armeabi-v7a") }
         externalNativeBuild { cmake { cppFlags += listOf("-std=c++17", "-Wall", "-Wextra"); arguments += "-DANDROID_STL=c++_shared" } }
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

@@ -8,12 +8,13 @@ using namespace rt;
 int main(int, char**) {
     SDL_SetHint(SDL_HINT_ANDROID_TRAP_BACK_BUTTON,"1");
     SDL_SetHint(SDL_HINT_RENDER_DRIVER,"opengles2");
+    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY,"1");
     if(SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO|SDL_INIT_GAMECONTROLLER)!=0)return 1;
     auto* window=SDL_CreateWindow("RetroTV Lite",0,0,1280,720,SDL_WINDOW_FULLSCREEN_DESKTOP);
     auto* renderer=SDL_CreateRenderer(window,-1,SDL_RENDERER_ACCELERATED|SDL_RENDERER_PRESENTVSYNC);
     if(!renderer){SDL_Quit();return 2;}
     SDL_RenderSetLogicalSize(renderer,1280,720);
-    Platform platform; auto* atlas=platform.font(renderer); UI ui(renderer,atlas,platform.call("fontMetrics")); Model model;
+    Platform platform; auto* atlas=platform.font(renderer); UI ui(renderer,atlas,platform.call("fontMetrics"),[&](const std::string& uri){return platform.cover(renderer,uri);}); Model model;
     model.minimal=platform.call("setting","minimal")=="1";
     model.performance=platform.call("setting","performance")=="1";
     auto savedTab=platform.call("setting","tab");if(!savedTab.empty())model.tab=std::clamp(std::atoi(savedTab.c_str()),0,8);
@@ -22,11 +23,13 @@ int main(int, char**) {
     auto saveFocus=[&]{model.positions[model.tab]=model.selection;platform.call("setting","tab\t"+std::to_string(model.lastContentTab));std::string value;for(auto n:model.positions){if(!value.empty())value+=",";value+=std::to_string(n);}platform.call("setting","positions\t"+value);};
     auto loadCatalog=[&] {
         const auto old=model.selected()?model.selected()->id:"";
+        ui.clearCovers();platform.call("clearArtwork");
         model.games.clear();
         for(const auto& row:split(platform.call("catalog"),'\n')) {
-            auto p=split(row,'\t'); if(p.size()!=9)continue;
+            auto p=split(row,'\t'); if(p.size()!=10)continue;
             Game g;g.id=p[0];g.title=p[1];g.system=p[2];g.uri=p[3];g.core=p[4];g.favorite=p[5]=="1";
             g.recent=std::strtoll(p[6].c_str(),nullptr,10);g.played=std::strtoll(p[7].c_str(),nullptr,10);g.available=p[8]=="1";
+            g.cover=p[9];
             model.games.push_back(g);
         }
         auto rows=model.visible();for(size_t i=0;i<rows.size();++i)if(model.games[rows[i]].id==old)model.selection=int(i);
@@ -40,6 +43,11 @@ int main(int, char**) {
     bool running=true,background=false; std::map<SDL_JoystickID,SDL_GameController*> controllers;
     auto action=[&](Action a) {
         if(!session.active()&&model.screen==Screen::Library&&model.sidebar&&a==Action::Back){saveFocus();running=false;return;}
+        if(!session.active()&&model.screen==Screen::Library&&!model.sidebar&&model.visible().empty()&&a==Action::Ok) {
+            if(model.selection==0){platform.call("request","choose");return;}
+            Game demo;demo.id="retrotv-demo-cc0";demo.title="Teste original RetroTV";demo.system="NES";demo.uri="demo:retrotv-pad-test.nes";demo.core="quicknes";
+            if(!session.launch(demo,platform,false)){model.screen=Screen::Error;model.message=session.error;}else{nextFrame=0;model.screen=Screen::QuickMenu;model.option=0;}return;
+        }
         if(model.screen==Screen::Controls){
             if(a==Action::Back){remapTarget=-1;model.screen=session.active()?Screen::QuickMenu:Screen::Settings;model.option=0;return;}
             if(a==Action::Up)model.option=std::max(0,model.option-1);
@@ -92,7 +100,7 @@ int main(int, char**) {
                 platform.call("setting",std::string("minimal\t")+(model.minimal?"1":"0"));
                 platform.call("setting",std::string("performance\t")+(model.performance?"1":"0"));
                 if(model.option==7){model.screen=Screen::Diagnostics;model.message=platform.call("diagnostics");}
-                if(model.option==8){model.screen=Screen::Diagnostics;model.message="RetroTV Lite · 0.1.0-dev\nCódigo original GPL-2.0-or-later\nSDL2: zlib · QuickNES: GPL-2.0-or-later\nFontes e licenças acompanham o projeto.\nSem jogos comerciais ou BIOS incluídos.\nVoltar retorna à biblioteca.";}
+                if(model.option==8){model.screen=Screen::Diagnostics;model.message="RetroTV Lite · 0.2.0-dev\nCódigo original GPL-2.0-or-later\nSDL2: zlib · QuickNES: GPL-2.0-or-later\nFontes e licenças acompanham o projeto.\nSem jogos comerciais ou BIOS incluídos.\nVoltar retorna à biblioteca.";}
                 if(model.option==9){Game demo;demo.id="retrotv-demo-cc0";demo.title="Teste original RetroTV";demo.system="NES";demo.uri="demo:retrotv-pad-test.nes";demo.core="quicknes";if(!session.launch(demo,platform,false)){model.screen=Screen::Error;model.message=session.error;}else{nextFrame=0;model.screen=Screen::QuickMenu;model.option=0;}}
                 if(model.option==4)platform.call("request","export");
                 if(model.option==5){pendingAction=100;model.screen=Screen::Confirm;model.message="Restaurar um backup substituirá os saves atuais.\nUma cópia completa anterior será preservada.\nConfirme apenas backups do RetroTV.\nOK: escolher backup · Voltar: cancelar";}
@@ -117,8 +125,8 @@ int main(int, char**) {
         SDL_Event e;
         while(SDL_PollEvent(&e)) {
             if(e.type==SDL_QUIT)running=false;
-            if(e.type==SDL_RENDER_DEVICE_RESET){session.invalidateFrame();SDL_DestroyTexture(atlas);atlas=platform.font(renderer);ui.setAtlas(atlas);}
-            if(e.type==SDL_APP_LOWMEMORY){model.performance=true;platform.call("setting","performance\t1");}
+            if(e.type==SDL_RENDER_DEVICE_RESET){session.invalidateFrame();ui.clearCovers();SDL_DestroyTexture(atlas);atlas=platform.font(renderer);ui.setAtlas(atlas);}
+            if(e.type==SDL_APP_LOWMEMORY){ui.clearCovers();model.performance=true;platform.call("setting","performance\t1");}
             if(e.type==SDL_APP_WILLENTERBACKGROUND){background=true;saveFocus();if(session.active()){session.pause();session.save(true);model.screen=Screen::QuickMenu;model.option=0;}}
             if(e.type==SDL_APP_DIDENTERFOREGROUND)background=false;
             if(e.type==SDL_CONTROLLERDEVICEADDED) {auto* c=SDL_GameControllerOpen(e.cdevice.which);if(c){auto id=SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(c));controllers[id]=c;mappings[id]=defaultMapping;auto saved=split(platform.call("setting",controllerKey(c)),',');if(saved.size()==16)for(int i=0;i<16;++i){auto v=std::atoi(saved[i].c_str());if(v>=-3&&v<SDL_CONTROLLER_BUTTON_MAX)mappings[id][i]=v;}for(auto& slot:players)if(slot<0){slot=id;break;}}}
@@ -163,5 +171,5 @@ int main(int, char**) {
         }else {ui.draw(model,platform.call("status"));SDL_RenderPresent(renderer);SDL_Delay(model.performance?20:4);}
     }
     session.finish(platform);for(auto& c:controllers)SDL_GameControllerClose(c.second);
-    SDL_DestroyTexture(atlas);SDL_DestroyRenderer(renderer);SDL_DestroyWindow(window);SDL_Quit();return 0;
+    ui.clearCovers();SDL_DestroyTexture(atlas);SDL_DestroyRenderer(renderer);SDL_DestroyWindow(window);SDL_Quit();return 0;
 }

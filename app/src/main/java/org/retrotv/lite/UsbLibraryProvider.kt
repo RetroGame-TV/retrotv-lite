@@ -50,7 +50,15 @@ class UsbLibraryProvider(private val context: Context, private val db: LibraryDa
                     val children = DC.buildChildDocumentsUriUsingTree(tree, parent)
                     val columns = arrayOf(DC.Document.COLUMN_DOCUMENT_ID, DC.Document.COLUMN_DISPLAY_NAME, DC.Document.COLUMN_MIME_TYPE, DC.Document.COLUMN_SIZE, DC.Document.COLUMN_LAST_MODIFIED)
                     val cursor = context.contentResolver.query(children, columns, null, null, null) ?: error("USB indisponível")
+                    val covers = HashMap<String, String>()
+                    // The cursor is rewindable: discover sidecar art before indexing ROMs.
                     cursor.use { c ->
+                        while (c.moveToNext() && !cancelled.get()) {
+                            val name = c.getString(1) ?: continue
+                            if (name.substringAfterLast('.', "").lowercase() in setOf("png", "jpg", "jpeg", "webp") && c.getLong(3) in 1..12L*1024*1024)
+                                covers[name.substringBeforeLast('.').lowercase()] = DC.buildDocumentUriUsingTree(tree, c.getString(0)).toString()
+                        }
+                        c.moveToPosition(-1)
                         while (c.moveToNext() && !cancelled.get()) {
                             val id = c.getString(0); val name = c.getString(1) ?: continue
                             if (c.getString(2) == DC.Document.MIME_TYPE_DIR) {
@@ -66,6 +74,7 @@ class UsbLibraryProvider(private val context: Context, private val db: LibraryDa
                                 put("core", CatalogRules.core(system)); put("scan", scan); put("available", 1)
                                 put("size", c.getLong(3)); put("modified", c.getLong(4))
                                 put("relative", "$folder/$name")
+                                put("cover", covers[name.substringBeforeLast('.').lowercase()] ?: "")
                             })
                             if (count % 50 == 0) { status = "$count jogos encontrados"; generation.incrementAndGet() }
                         }

@@ -15,4 +15,4 @@
 - [ ] Editor avançado de perfis por jogo, feedback de USB removido durante core que contorne VFS e auditoria prolongada de memória.
 - [ ] Assinatura release do proprietário e distribuição pública autorizada.
 
-O artefato 0.1.0-dev é uma entrega de desenvolvimento. Não chamar de release 1.0 validada. F7 (scraper, usuários locais, previews animados e personalização avançada) segue adiado conforme o plano: requer primeiro aprovação do fluxo principal no hardware. Não há rede/scraper escondido.
+O artefato 0.2.0-dev é uma entrega de desenvolvimento com revisão visual e capas locais. Não chamar de release 1.0 validada. F7 (scraper, usuários locais, previews animados e personalização avançada) segue adiado conforme o plano: requer primeiro aprovação do fluxo principal no hardware. Não há rede/scraper escondido.

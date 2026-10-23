@@ -11,13 +11,14 @@ struct Game {
     std::string id, title, system, uri, core;
     bool favorite = false, available = true;
     int64_t recent = 0, played = 0;
+    std::string cover;
 };
 inline const std::array<const char*, 10> tabs = {"Início", "Continuar", "Recentes", "Favoritos", "NES", "SNES", "Mega Drive", "Arcade", "PlayStation", "Configurações"};
 struct Theme {
     uint32_t background, panel, card, accent, text, muted;
     int cacheMiB; bool minimal;
-    static Theme classic() { return {0x0D141C,0x141F2A,0x1D2A36,0x73E0B4,0xF2F6F8,0xA7B8C7,8,false}; }
-    static Theme minimalTheme() { return {0x101215,0x101215,0x1C2025,0x73E0B4,0xF5F7FA,0xB3BDC7,2,true}; }
+    static Theme classic() { return {0x161519,0x1E1D23,0x29272F,0xB699FF,0xF7F5FA,0xA4A0AF,8,false}; }
+    static Theme minimalTheme() { return {0x101012,0x19191C,0x27272B,0xF4F3F6,0xF7F5FA,0x9B99A2,2,true}; }
 };
 struct Model {
     Screen screen = Screen::Library;
@@ -46,15 +47,21 @@ struct Model {
         if(screen!=Screen::Library) { if(a==Action::Back) { screen=Screen::Library; sidebar=true; if(tab==9)selectTab(lastContentTab); } return; }
         if(a==Action::Menu) { screen=Screen::Settings; option=0; return; }
         if(sidebar) {
-            if(a==Action::Up) selectTab(tab-1);
-            if(a==Action::Down) selectTab(tab+1);
-            if(a==Action::Right||a==Action::Ok) sidebar=false;
+            if(a==Action::Left) selectTab(tab-1);
+            if(a==Action::Right) selectTab(tab+1);
+            if(a==Action::Down||a==Action::Ok) sidebar=false;
         } else {
             const auto count=visible().size();
-            if(a==Action::Left||a==Action::Back) sidebar=true;
-            if(a==Action::Down && count) selection=std::min(selection+1,int(count-1));
-            if(a==Action::Up) selection=std::max(selection-1,0);
-            if(a==Action::Right && count) selection=std::min(selection+1,int(count-1));
+            if((minimal||performance)&&count) {
+                if(a==Action::Left||a==Action::Back||(a==Action::Up&&selection==0))sidebar=true;
+                else if(a==Action::Up)selection=std::max(0,selection-1);
+                if(a==Action::Down||a==Action::Right)selection=std::min(selection+1,int(count-1));
+                if(a==Action::Ok&&selected()){screen=Screen::Details;option=0;}
+                return;
+            }
+            if(a==Action::Up||a==Action::Back) sidebar=true;
+            if(a==Action::Left) selection=std::max(selection-1,0);
+            if(a==Action::Right) selection=std::min(selection+1,count?int(count-1):1);
             if(a==Action::Ok && selected()) { screen=Screen::Details; option=0; }
         }
     }
