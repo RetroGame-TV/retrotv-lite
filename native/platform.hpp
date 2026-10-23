@@ -8,7 +8,7 @@ class Platform {
     JNIEnv* env() { return static_cast<JNIEnv*>(SDL_AndroidGetJNIEnv()); }
 public:
     std::string call(const char* method, const std::string& value="") {
-        auto* e=env(); auto activity=SDL_AndroidGetActivity(); auto cls=e->GetObjectClass(activity);
+        auto* e=env(); auto activity=static_cast<jobject>(SDL_AndroidGetActivity()); auto cls=e->GetObjectClass(activity);
         auto mid=e->GetMethodID(cls,method,"(Ljava/lang/String;)Ljava/lang/String;");
         auto arg=e->NewStringUTF(value.c_str());
         auto result=static_cast<jstring>(e->CallObjectMethod(activity,mid,arg)); std::string out;
@@ -17,7 +17,7 @@ public:
         if(result)e->DeleteLocalRef(result); e->DeleteLocalRef(arg); e->DeleteLocalRef(cls); e->DeleteLocalRef(activity); return out;
     }
     SDL_Texture* font(SDL_Renderer* r) {
-        auto* e=env(); auto activity=SDL_AndroidGetActivity(); auto cls=e->GetObjectClass(activity);
+        auto* e=env(); auto activity=static_cast<jobject>(SDL_AndroidGetActivity()); auto cls=e->GetObjectClass(activity);
         auto mid=e->GetMethodID(cls,"fontAtlas","()[B"); auto bytes=static_cast<jbyteArray>(e->CallObjectMethod(activity,mid));
         if(!bytes||e->ExceptionCheck()) { e->ExceptionClear(); return nullptr; }
         auto data=e->GetByteArrayElements(bytes,nullptr);

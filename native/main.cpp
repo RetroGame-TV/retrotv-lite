@@ -13,13 +13,43 @@ int main(int, char**) {
     if(!renderer){SDL_Quit();return 2;}
     SDL_RenderSetLogicalSize(renderer,1280,720);
     Platform platform; auto* atlas=platform.font(renderer); UI ui(renderer,atlas); Model model;
+    model.minimal=platform.call("setting","minimal")=="1";
+    model.performance=platform.call("setting","performance")=="1";
+    auto loadCatalog=[&] {
+        const auto old=model.selected()?model.selected()->id:"";
+        model.games.clear();
+        for(const auto& row:split(platform.call("catalog"),'\n')) {
+            auto p=split(row,'\t'); if(p.size()!=9)continue;
+            Game g;g.id=p[0];g.title=p[1];g.system=p[2];g.uri=p[3];g.core=p[4];g.favorite=p[5]=="1";
+            g.recent=std::strtoll(p[6].c_str(),nullptr,10);g.played=std::strtoll(p[7].c_str(),nullptr,10);g.available=p[8]=="1";
+            model.games.push_back(g);
+        }
+        auto rows=model.visible();for(size_t i=0;i<rows.size();++i)if(model.games[rows[i]].id==old)model.selection=int(i);
+    };
+    loadCatalog(); std::string revision=platform.call("revision"); uint32_t lastRefresh=0;
     bool running=true,background=false; std::map<SDL_JoystickID,SDL_GameController*> controllers;
     auto action=[&](Action a) {
         if(model.screen==Screen::Settings) {
+            if(a==Action::Back){model.navigate(a);return;}
             if(a==Action::Up)model.option=std::max(0,model.option-1);
             if(a==Action::Down)model.option=std::min(8,model.option+1);
             if(a==Action::Ok && model.option==2)model.minimal=!model.minimal;
             if(a==Action::Ok && model.option==3)model.performance=!model.performance;
+            if(a==Action::Ok && model.option==0)platform.call("request","choose");
+            if(a==Action::Ok && model.option==1)platform.call("request","scan");
+            if(a==Action::Ok) {
+                platform.call("setting",std::string("minimal\t")+(model.minimal?"1":"0"));
+                platform.call("setting",std::string("performance\t")+(model.performance?"1":"0"));
+                if(model.option==7){model.screen=Screen::Diagnostics;model.message=platform.call("diagnostics");}
+                if(model.option==8){model.screen=Screen::Diagnostics;model.message="RetroTV Lite · 0.1.0-dev\nCódigo original GPL-2.0-or-later\nSDL2: zlib · QuickNES: GPL-2.0-or-later\nFontes e licenças acompanham o projeto.\nSem jogos comerciais ou BIOS incluídos.\nVoltar retorna à biblioteca.";}
+            }
+            return;
+        }
+        if(model.screen==Screen::Details && a==Action::Ok) {
+            auto* g=model.selected(); if(!g)return;
+            if(model.option==2){platform.call("request","favorite\t"+g->id+"\t"+(g->favorite?"0":"1"));loadCatalog();return;}
+            if(model.option==3){model.screen=Screen::Library;return;}
+            model.screen=Screen::Error;model.message="Núcleo ainda não iniciado.\nIntegração Libretro no próximo marco.\nVoltar retorna à biblioteca.";return;
         }
         model.navigate(a);
     };
@@ -50,6 +80,7 @@ int main(int, char**) {
             }
         }
         if(background){SDL_Delay(40);continue;}
+        if(SDL_GetTicks()-lastRefresh>500){auto next=platform.call("revision");if(next!=revision){loadCatalog();revision=next;}lastRefresh=SDL_GetTicks();}
         ui.draw(model,platform.call("status"));SDL_RenderPresent(renderer);SDL_Delay(model.performance?20:4);
     }
     for(auto& c:controllers)SDL_GameControllerClose(c.second);
