@@ -1,6 +1,6 @@
 # RetroTV Lite
 
-App Android TV nativo C++17/SDL2/GLES2 + Kotlin/SAF, destinado à Philco PTV40G71AGBL (Android 11, **ARMv7 de 32 bits**). Interface original, offline e navegável por controle remoto. Versão de desenvolvimento **0.3.0-dev**; não é release 1.0 certificada.
+App Android TV nativo C++17/SDL2/GLES2 + Kotlin/SAF, destinado à Philco PTV40G71AGBL (Android 11, **ARMv7 de 32 bits**). Interface original, offline e navegável por controle remoto. Versão de desenvolvimento **0.4.0-dev**; não é release 1.0 certificada.
 
 Inclui biblioteca SQLite, pastas SAF, favoritos/recentes, Galeria com capas locais/Minimal monocromático, modo performance, host Libretro (frontend próprio, sem incorporar a interface do RetroArch), perfis persistentes de proporção/filtro/volume, menu rápido, SRAM, save states/Quick Resume condicionais, backup/restore validado e controles com dois slots/remapeamento. Demo NES original CC0 permite testar o fluxo sem obter ROM comercial. Para usar capas: `Nome do jogo.png` (ou jpg/jpeg/webp) ao lado da ROM com o mesmo nome base; atualizar biblioteca após mudanças. Veja [especificação visual](docs/ui-spec.md).
 
@@ -53,3 +53,5 @@ ctest --test-dir build/native --output-on-failure
 ```
 
 São testes reais de QuickNES e políticas de navegação/saves/VFS. Testes Android adicionais usam provider sintético apenas no debug. Variante exclusiva para emulador: `-PtestAbi=x86` (saídas em `app/build-emulator/`; não entregar para a TV ARM).
+
+Controle Bluetooth pelo celular e troca automática de layout: veja docs/phone-controller.md. Exige RetroTV Pad no celular; a sincronização é opcional e desligada por padrão.

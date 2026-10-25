@@ -17,6 +17,7 @@ int main(int, char**) {
     Platform platform; auto* atlas=platform.font(renderer); UI ui(renderer,atlas,platform.call("fontMetrics"),[&](const std::string& uri){return platform.cover(renderer,uri);}); Model model;
     model.minimal=platform.call("setting","minimal")=="1";
     model.performance=platform.call("setting","performance")=="1";
+    model.phoneEnabled=platform.call("setting","phoneSync")=="1";std::string lastPhoneContext;
     auto savedTab=platform.call("setting","tab");if(!savedTab.empty())model.tab=std::clamp(std::atoi(savedTab.c_str()),0,8);
     model.lastContentTab=model.tab;
     auto savedPositions=split(platform.call("setting","positions"),',');if(savedPositions.size()==10)for(int i=0;i<10;++i)model.positions[i]=std::max(0,std::atoi(savedPositions[i].c_str()));model.selection=model.positions[model.tab];
@@ -115,7 +116,7 @@ int main(int, char**) {
         if(model.screen==Screen::Settings) {
             if(a==Action::Back){model.navigate(a);return;}
             if(a==Action::Up)model.option=std::max(0,model.option-1);
-            if(a==Action::Down)model.option=std::min(10,model.option+1);
+            if(a==Action::Down)model.option=std::min(11,model.option+1);
             if(a==Action::Ok && model.option==2)model.minimal=!model.minimal;
             if(a==Action::Ok && model.option==3)model.performance=!model.performance;
             if(a==Action::Ok && model.option==0)platform.call("request","choose");
@@ -124,11 +125,12 @@ int main(int, char**) {
                 platform.call("setting",std::string("minimal\t")+(model.minimal?"1":"0"));
                 platform.call("setting",std::string("performance\t")+(model.performance?"1":"0"));
                 if(model.option==7){model.screen=Screen::Diagnostics;model.message=platform.call("diagnostics");}
-                if(model.option==8){model.screen=Screen::Diagnostics;model.message="RetroTV Lite · 0.3.0-dev\nCódigo original GPL-2.0-or-later\nSDL2: zlib · QuickNES: GPL-2.0-or-later\nFontes e licenças acompanham o projeto.\nSem jogos comerciais ou BIOS incluídos.\nVoltar retorna à biblioteca.";}
+                if(model.option==8){model.screen=Screen::Diagnostics;model.message="RetroTV Lite · 0.4.0-dev\nCódigo original GPL-2.0-or-later\nSDL2: zlib · QuickNES: GPL-2.0-or-later\nFontes e licenças acompanham o projeto.\nSem jogos comerciais ou BIOS incluídos.\nVoltar retorna à biblioteca.";}
                 if(model.option==9){Game demo;demo.id="retrotv-demo-cc0";demo.title="Teste original RetroTV";demo.system="NES";demo.uri="demo:retrotv-pad-test.nes";demo.core="quicknes";ui.clearCovers();platform.call("clearArtwork");if(!session.launch(demo,platform,false)){model.screen=Screen::Error;model.message=session.error;}else{nextFrame=0;model.sessionGame=session.game;model.screen=Screen::QuickMenu;model.option=0;}}
                 if(model.option==4)platform.call("request","export");
                 if(model.option==5){pendingAction=100;model.screen=Screen::Confirm;model.message="Restaurar um backup substituirá os saves atuais.\nUma cópia completa anterior será preservada.\nConfirme apenas backups do RetroTV.\nOK: escolher backup · Voltar: cancelar";}
                 if(model.option==6){model.screen=Screen::Controls;model.option=0;model.message="OK: remapear com um botão do gamepad.\nConfiguração salva por modelo de controle.";}
+                if(model.option==11){model.screen=Screen::Diagnostics;model.message=platform.call("phone","toggle");}
                 if(model.option==10){pendingAction=101;model.screen=Screen::Confirm;model.message="Importar sua BIOS PS1 de 512 KiB?\nA anterior será preservada em .prev.\nRegião e compatibilidade devem ser conferidas.\nOK: escolher arquivo · Voltar: cancelar";}
             }
             return;
@@ -183,7 +185,12 @@ int main(int, char**) {
             }
         }
         if(background){SDL_Delay(40);continue;}
-        if(SDL_GetTicks()-lastRefresh>500){auto next=platform.call("revision");if(next!=revision){loadCatalog();revision=next;}lastRefresh=SDL_GetTicks();}
+        if(SDL_GetTicks()-lastRefresh>500){auto next=platform.call("revision");if(next!=revision){loadCatalog();revision=next;}model.phoneEnabled=platform.call("setting","phoneSync")=="1";lastRefresh=SDL_GetTicks();}
+        if(model.phoneEnabled){
+            Game* contextGame=session.active()?&session.game:((model.screen==Screen::Library||model.screen==Screen::Details||model.screen==Screen::Playback)?model.selected():nullptr);
+            std::string context=(contextGame?contextGame->system:"")+"\t"+(contextGame?contextGame->title:"")+"\t"+(session.host.state==SessionState::Running?"running":session.active()?"paused":"library");
+            if(context!=lastPhoneContext){platform.call("controllerContext",context);lastPhoneContext=context;}
+        }else lastPhoneContext.clear();
         if(session.host.state==SessionState::Running){
             session.host.buttons={};session.host.axes={};
             for(int port=0;port<2;++port){auto it=controllers.find(players[port]);if(it==controllers.end())continue;auto& mapping=mappings[it->first];for(int id=0;id<16;++id){if(mapping[id]>=0)session.host.buttons[port][id]=SDL_GameControllerGetButton(it->second,SDL_GameControllerButton(mapping[id]));else if(mapping[id]==-2||mapping[id]==-3)session.host.buttons[port][id]=SDL_GameControllerGetAxis(it->second,mapping[id]==-2?SDL_CONTROLLER_AXIS_TRIGGERLEFT:SDL_CONTROLLER_AXIS_TRIGGERRIGHT)>8000;}for(int axis=0;axis<4;++axis){auto value=SDL_GameControllerGetAxis(it->second,SDL_GameControllerAxis(axis));session.host.axes[port][axis]=std::abs(int(value))<8000?0:value;}}

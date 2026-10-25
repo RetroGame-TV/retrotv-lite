@@ -178,10 +178,10 @@ public:
     }
     void settings(Model& m){
         menuTitle("AJUSTES","Do seu jeito.","Sua coleção e suas preferências, em um só lugar.");
-        const char* labels[]={"Adicionar pasta de jogos","Atualizar biblioteca","Aparência","Modo leve","Exportar saves","Restaurar saves","Controles e botões","Diagnóstico","Sobre o RetroTV","Testar controle","Importar BIOS · PlayStation"};
-        int first=std::clamp(m.option-3,0,5);
-        for(int i=first;i<11&&i<first+6;++i){std::string value=i==2?(m.minimal?"Minimal":"Galeria"):i==3?(m.performance?"Ativo":"Desativado"):i==9?"Demo original":"";row(166+(i-first)*75,labels[i],value,m.option==i);}
-        text(453,628,std::to_string(m.option+1)+" / 11",13,theme.muted);round(1209,167,3,430,1,theme.card);round(1209,167+first*34,3,260,1,theme.muted);
+        const char* labels[]={"Adicionar pasta de jogos","Atualizar biblioteca","Aparência","Modo leve","Exportar saves","Restaurar saves","Controles e botões","Diagnóstico","Sobre o RetroTV","Testar controle","Importar BIOS · PlayStation","Controle pelo celular"};
+        int first=std::clamp(m.option-3,0,6);
+        for(int i=first;i<12&&i<first+6;++i){std::string value=i==2?(m.minimal?"Minimal":"Galeria"):i==3?(m.performance?"Ativo":"Desativado"):i==9?"Demo original":i==11?(m.phoneEnabled?"Ativo":"Desativado"):"";row(166+(i-first)*75,labels[i],value,m.option==i);}
+        text(453,628,std::to_string(m.option+1)+" / 12",13,theme.muted);round(1209,167,3,430,1,theme.card);round(1209,167+first*28,3,230,1,theme.muted);
     }
     void playback(Model& m){
         menuTitle("IMAGEM E ÁUDIO","Uma boa partida.",m.profileGame.title);text(453,123,m.profileSystem?"PADRÃO DO CONSOLE":"AJUSTES DESTE JOGO",12,theme.accent,true);

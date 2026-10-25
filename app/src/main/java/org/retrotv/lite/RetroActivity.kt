@@ -38,6 +38,7 @@ class RetroActivity : SDLActivity() {
             else library.validate(tree)
         }
     }
+    private val phoneBridge by lazy { PhoneControllerBridge(this) { prefs.edit().putString("phoneSync","0").apply() } }
     private var mediaRegistered = false
     override fun getLibraries(): Array<String> = arrayOf("SDL2", "main")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -52,6 +53,30 @@ class RetroActivity : SDLActivity() {
         if (android.os.Build.VERSION.SDK_INT >= 33) registerReceiver(mediaEvents, filter, Context.RECEIVER_NOT_EXPORTED)
         else registerReceiver(mediaEvents, filter)
         mediaRegistered = true
+    }
+    private fun hasPhonePermission() = android.os.Build.VERSION.SDK_INT < 31 || checkSelfPermission(android.Manifest.permission.BLUETOOTH_CONNECT) == android.content.pm.PackageManager.PERMISSION_GRANTED
+    override fun onStart() { super.onStart(); if (prefs.getString("phoneSync","0")=="1" && hasPhonePermission()) phoneBridge.start() }
+    override fun onStop() { phoneBridge.stop(); super.onStop() }
+    fun controllerContext(value:String):String { phoneBridge.publish(value); return "OK" }
+    fun phone(value:String):String {
+        if (prefs.getString("phoneSync","0")=="1") {
+            prefs.edit().putString("phoneSync","0").apply(); phoneBridge.stop()
+            return "Sincronia do celular desativada.\nO gamepad Bluetooth continua funcionando normalmente."
+        }
+        if (!hasPhonePermission()) {
+            runOnUiThread { requestPermissions(arrayOf(android.Manifest.permission.BLUETOOTH_CONNECT),90) }
+            return "Autorize dispositivos próximos no aviso do Android.\nDepois conecte o RetroTV Pad à TV por Bluetooth."
+        }
+        if (!phoneBridge.start()) return phoneBridge.status
+        prefs.edit().putString("phoneSync","1").apply()
+        return "Sincronia do celular ativada.\nNo celular, abra RetroTV Pad e conecte à TV.\nDeixe AUTO ligado para trocar o controle por console.\nAparelhos precisam estar pareados por Bluetooth.\nVoltar retorna à biblioteca."
+    }
+    override fun onRequestPermissionsResult(requestCode:Int,permissions:Array<out String>,grantResults:IntArray) {
+        super.onRequestPermissionsResult(requestCode,permissions,grantResults)
+        if(requestCode==90) {
+            if(hasPhonePermission() && phoneBridge.start())prefs.edit().putString("phoneSync","1").apply()
+            else prefs.edit().putString("phoneSync","0").apply()
+        }
     }
     fun fontAtlas(): ByteArray {
         val bitmap = Bitmap.createBitmap(1024, 1792, Bitmap.Config.ARGB_8888)
@@ -177,5 +202,5 @@ class RetroActivity : SDLActivity() {
         super.onResume()
         prefs.getString("tree", null)?.let { library.validate(Uri.parse(it)) }
     }
-    override fun onDestroy() { if (mediaRegistered) unregisterReceiver(mediaEvents); library.close(); artwork.close(); super.onDestroy(); transfers.shutdown(); database.close() }
+    override fun onDestroy() { phoneBridge.stop(); if (mediaRegistered) unregisterReceiver(mediaEvents); library.close(); artwork.close(); super.onDestroy(); transfers.shutdown(); database.close() }
 }

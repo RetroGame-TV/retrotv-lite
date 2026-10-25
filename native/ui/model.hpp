@@ -23,7 +23,7 @@ struct Theme {
 struct Model {
     Screen screen = Screen::Library;
     int tab = 0, selection = 0, option = 0, lastContentTab = 0;
-    bool sidebar = true, performance = false, minimal = false;
+    bool sidebar = true, performance = false, minimal = false, phoneEnabled = false;
     std::array<int,10> positions{};
     std::vector<Game> games;
     std::string message;

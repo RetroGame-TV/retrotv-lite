@@ -82,3 +82,8 @@ Direção 0.2 mantida e refinada: proporções das capas, tipografia-base de 40 
 Editor de proporção/filtro/volume por jogo e console implementado, persistente e aplicado ao retomar. Demais opções avançadas do perfil (núcleo/frameskip/remapeamento por console) continuam pendentes. SRAM passou a validar família do núcleo e tamanho, preservando compatibilidade após recompilação; snapshots mantêm identidade exata do binário. Testes usam metadados antigos reais do envelope RTVSAVE2.
 
 CTest 3/3, JUnit JVM 7/7, Android 4/4 e lint 0 erros/53 avisos. Navegação, tema Minimal, perfil herdado/reset, partida, Quick Resume e rejeição de snapshot antigo observados no Android TV virtual. APK debug ARMv7 pessoal reúne os cinco núcleos já compilados; auditoria ELF32/assinatura v2/permissões passou. Apenas NES executado; outros consoles e TV física continuam pendentes. Consulte visual-validation-0.3.0.md para comandos e limites. Projeto, SDK e build permanecem no disco D.
+
+## Controle pelo celular · 0.4.0-dev
+Ponte de metadados RFCOMM original implementada com opt-in, pareamento autenticado, encerramento no lifecycle e até dois clientes. Native envia contexto da seleção/sessão quando muda. O app RetroTV Pad usa HID padrão para input e escolhe layouts por console; o frontend/núcleos da TV não incorporam código Bluke/Delta.
+
+Build x86 e ARMv7 debug pessoal passou; JUnit7/7, Android5/5 (incluindo protocolo UTF-8/escape/limites), lint sem erros e CTest3/3. Navegação D-pad até Ajustes > Controle pelo celular e ativação capturadas. Bluetooth entre aparelhos físicos permanece pendente. Ver docs/phone-controller.md. Biblioteca, saves e cores mantidos; não há novos jogos ou nova validação dos demais consoles.
