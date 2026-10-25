@@ -18,14 +18,15 @@ class UI {
     static uint32_t mix(uint32_t a,uint32_t b,float t){auto ch=[&](int n){return int(((a>>n)&255)*(1-t)+((b>>n)&255)*t);};return(ch(16)<<16)|(ch(8)<<8)|ch(0);}
     void makeShapes(){
         if(shapes)SDL_DestroyTexture(shapes);shapes=nullptr;
-        auto* surface=SDL_CreateRGBSurfaceWithFormat(0,64,128,32,SDL_PIXELFORMAT_RGBA32);if(!surface)return;
+        auto* surface=SDL_CreateRGBSurfaceWithFormat(0,68,136,32,SDL_PIXELFORMAT_RGBA32);if(!surface)return;
+        SDL_FillRect(surface,nullptr,SDL_MapRGBA(surface->format,255,255,255,0));SDL_Rect inversePad{0,68,68,68};SDL_FillRect(surface,&inversePad,SDL_MapRGBA(surface->format,255,255,255,255));
         auto* pixels=static_cast<uint8_t*>(surface->pixels);
         for(int y=0;y<64;++y)for(int x=0;x<64;++x){float d=std::sqrt((x-31.5f)*(x-31.5f)+(y-31.5f)*(y-31.5f));auto alpha=Uint8(255*std::clamp(32.f-d,0.f,1.f));
-            for(int part=0;part<2;++part){auto* p=pixels+(y+part*64)*surface->pitch+x*4;p[0]=p[1]=p[2]=255;p[3]=part?255-alpha:alpha;}}
+            for(int part=0;part<2;++part){auto* p=pixels+(y+2+part*68)*surface->pitch+(x+2)*4;p[0]=p[1]=p[2]=255;p[3]=part?255-alpha:alpha;}}
         shapes=SDL_CreateTextureFromSurface(renderer,surface);SDL_FreeSurface(surface);if(shapes)SDL_SetTextureBlendMode(shapes,SDL_BLENDMODE_BLEND);
     }
     unsigned glyph(const std::string& s,size_t& i)const{unsigned ch=static_cast<unsigned char>(s[i++]);if((ch&0xe0)==0xc0&&i<s.size())ch=((ch&31)<<6)|(static_cast<unsigned char>(s[i++])&63);else if(ch>=0xe0){while(i<s.size()&&(static_cast<unsigned char>(s[i])&0xc0)==0x80)++i;ch='?';}return ch<32||ch>255?'?':ch;}
-    void corner(int x,int y,int radius,int quadrant,uint32_t c,bool inverse=false){if(!shapes)return;SDL_SetTextureColorMod(shapes,(c>>16)&255,(c>>8)&255,c&255);SDL_Rect src{(quadrant%2)*32,(quadrant/2)*32+(inverse?64:0),32,32},dst{x,y,radius,radius};SDL_RenderCopy(renderer,shapes,&src,&dst);}
+    void corner(int x,int y,int radius,int quadrant,uint32_t c,bool inverse=false){if(!shapes)return;SDL_SetTextureColorMod(shapes,(c>>16)&255,(c>>8)&255,c&255);SDL_Rect src{2+(quadrant%2)*32,2+(quadrant/2)*32+(inverse?68:0),32,32},dst{x,y,radius,radius};SDL_RenderCopy(renderer,shapes,&src,&dst);}
     SDL_Texture* artwork(const Game& game){
         if(game.cover.empty()||theme.minimal)return nullptr;
         auto it=covers.find(game.cover);if(it==covers.end()&&covers.size()<6)it=covers.emplace(game.cover,Cover{}).first;if(it==covers.end())return nullptr;
@@ -72,7 +73,7 @@ public:
     void color(uint32_t c){SDL_SetRenderDrawColor(renderer,(c>>16)&255,(c>>8)&255,c&255,255);}
     void rect(int x,int y,int w,int h,uint32_t c){if(w<=0||h<=0)return;color(c);SDL_Rect box{x,y,w,h};SDL_RenderFillRect(renderer,&box);}
     void line(int x,int y,int x2,int y2,uint32_t c,int weight=1){color(c);for(int i=0;i<weight;++i)SDL_RenderDrawLine(renderer,x,y+i,x2,y2+i);}
-    void circle(int x,int y,int radius,uint32_t c){if(!shapes)return;SDL_SetTextureColorMod(shapes,(c>>16)&255,(c>>8)&255,c&255);SDL_Rect src{0,0,64,64},dst{x-radius,y-radius,radius*2+1,radius*2+1};SDL_RenderCopy(renderer,shapes,&src,&dst);}
+    void circle(int x,int y,int radius,uint32_t c){if(!shapes)return;SDL_SetTextureColorMod(shapes,(c>>16)&255,(c>>8)&255,c&255);SDL_Rect src{2,2,64,64},dst{x-radius,y-radius,radius*2+1,radius*2+1};SDL_RenderCopy(renderer,shapes,&src,&dst);}
     void round(int x,int y,int w,int h,int r,uint32_t c){r=std::min(r,std::min(w,h)/2);rect(x+r,y,w-r*2,h,c);rect(x,y+r,r,h-r*2,c);rect(x+w-r,y+r,r,h-r*2,c);corner(x,y,r,0,c);corner(x+w-r,y,r,1,c);corner(x,y+h-r,r,2,c);corner(x+w-r,y+h-r,r,3,c);}
     int width(const std::string& s,int size,bool bold=false)const{float w=0;size_t i=0;while(i<s.size())w+=advances[glyph(s,i)-32+(bold?224:0)]*size/40.f;return int(std::ceil(w));}
     void text(int x,int y,const std::string& s,int size=24,uint32_t c=0,bool bold=false,int limit=1200){

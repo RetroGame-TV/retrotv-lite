@@ -30,7 +30,7 @@ Legibilidade a distância, fluidez e consumo na Philco real ainda precisam de va
 
 ## Refinamento 0.3
 
-Cinco capas de 195×260 px e a próxima parcialmente visível, foco elevado em 120 ms, contorno completo e rolagem sem salto na troca da janela. Bordas e ícones usam um pequeno atlas de formas com antialiasing (64×128 RGBA, 32 KiB); o orçamento do atlas de fonte permanece igual. Capas são normalizadas com canto transparente e proporção preservada. Textos truncados reservam espaço para reticências.
+Cinco capas de 195×260 px e a próxima parcialmente visível, foco elevado em 120 ms, contorno completo e rolagem sem salto na troca da janela. Bordas e ícones usam um pequeno atlas de formas com antialiasing (68×136 RGBA, ~36 KiB, com margem para evitar vazamento na interpolação); o orçamento do atlas de fonte permanece igual. Capas são normalizadas com canto transparente e proporção preservada. Textos truncados reservam espaço para reticências.
 
 Detalhes têm ações primárias lado a lado; Continuar fica desabilitado sem arquivo de snapshot. A presença do arquivo não garante compatibilidade: o carregador valida conteúdo, versão/hash e CRC antes de restaurar. Pausa identifica o jogo e reaproveita o frame já existente como fundo discreto. Coleção filtrada vazia permite voltar ao acervo sem abrir o seletor de pastas.
 
