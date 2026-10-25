@@ -6,11 +6,12 @@ import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.RectF
+import android.graphics.Path
 import android.net.Uri
 import java.nio.ByteBuffer
 import java.util.concurrent.Executors
 
-/** Small asynchronous staging cache. Native UI owns at most six 192x256 textures. */
+/** Small asynchronous staging cache. Native UI owns at most six 240x320 textures. */
 class CoverRepository(private val resolver: ContentResolver) {
     private val worker = Executors.newSingleThreadExecutor()
     private val pending = HashSet<String>()
@@ -47,12 +48,14 @@ class CoverRepository(private val resolver: ContentResolver) {
         while (bounds.outWidth / sample > 512 || bounds.outHeight / sample > 512) sample *= 2
         val options = BitmapFactory.Options().apply { inSampleSize = sample; inPreferredConfig = Bitmap.Config.ARGB_8888 }
         val source = resolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, options) } ?: error("Invalid cover")
-        val target = Bitmap.createBitmap(192, 256, Bitmap.Config.ARGB_8888)
+        val target = Bitmap.createBitmap(240, 320, Bitmap.Config.ARGB_8888)
         try {
-            val canvas = Canvas(target); canvas.drawColor(0xff25232b.toInt())
-            val scale = minOf(192f / source.width, 256f / source.height)
+            val canvas = Canvas(target)
+            val clip = Path().apply { addRoundRect(RectF(0f, 0f, 240f, 320f), 16f, 16f, Path.Direction.CW) }
+            canvas.clipPath(clip); canvas.drawColor(0xff25232b.toInt())
+            val scale = minOf(240f / source.width, 320f / source.height)
             val width = source.width * scale; val height = source.height * scale
-            canvas.drawBitmap(source, null, RectF((192-width)/2, (256-height)/2, (192+width)/2, (256+height)/2), Paint(Paint.FILTER_BITMAP_FLAG))
+            canvas.drawBitmap(source, null, RectF((240-width)/2, (320-height)/2, (240+width)/2, (320+height)/2), Paint(Paint.FILTER_BITMAP_FLAG))
             return ByteBuffer.allocate(target.byteCount).also { target.copyPixelsToBuffer(it) }.array()
         } finally { source.recycle(); target.recycle() }
     }

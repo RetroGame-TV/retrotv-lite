@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 namespace rt {
-enum class Screen { Library, Details, Settings, QuickMenu, Confirm, Error, Diagnostics, Controls };
+enum class Screen { Library, Details, Settings, QuickMenu, Confirm, Error, Diagnostics, Controls, Playback };
 enum class Action { Up, Down, Left, Right, Ok, Back, Menu, Favorite };
 struct Game {
     std::string id, title, system, uri, core;
@@ -27,6 +27,8 @@ struct Model {
     std::array<int,10> positions{};
     std::vector<Game> games;
     std::string message;
+    Game sessionGame; bool sessionActive=false,resumeAvailable=false;
+    Game profileGame; bool profileSystem=false; std::string profileAspect="4:3",profileFilter="nearest",profileHint; int profileVolume=100;
     std::vector<size_t> visible() const {
         std::vector<size_t> out;
         for(size_t i=0;i<games.size();++i) {
@@ -43,7 +45,14 @@ struct Model {
     void selectTab(int value) { positions[tab]=selection; tab=std::clamp(value,0,9); selection=positions[tab]; if(tab==9) { screen=Screen::Settings; option=0; } else lastContentTab=tab; }
     void navigate(Action a) {
         if(screen==Screen::Error) { if(a==Action::Back||a==Action::Ok) screen=Screen::Library; return; }
-        if(screen==Screen::Details) { if(a==Action::Back) screen=Screen::Library; else if(a==Action::Up) option=std::max(0,option-1); else if(a==Action::Down) option=std::min(3,option+1); return; }
+        if(screen==Screen::Details) {
+            if(a==Action::Back)screen=Screen::Library;
+            if(a==Action::Left&&option==1)option=0;
+            if(a==Action::Right&&option==0&&resumeAvailable)option=1;
+            if(a==Action::Down)option=option<2?2:std::min(4,option+1);
+            if(a==Action::Up)option=option<=2?0:option-1;
+            return;
+        }
         if(screen!=Screen::Library) { if(a==Action::Back) { screen=Screen::Library; sidebar=true; if(tab==9)selectTab(lastContentTab); } return; }
         if(a==Action::Menu) { screen=Screen::Settings; option=0; return; }
         if(sidebar) {

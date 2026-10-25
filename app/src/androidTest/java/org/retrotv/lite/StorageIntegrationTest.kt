@@ -45,7 +45,7 @@ class StorageIntegrationTest {
             scan("normal"); assertEquals(1, db.snapshot().trim().lines().size); assertTrue(db.snapshot().trim().split('\t')[9].contains("cover"))
             val art = CoverRepository(context.contentResolver)
             try { val uri = db.snapshot().trim().split('\t')[9]; var pixels: ByteArray? = null; val deadline = System.currentTimeMillis() + 5000
-                while (pixels == null && System.currentTimeMillis() < deadline) { pixels = art.poll(uri); Thread.sleep(20) }; assertEquals(192*256*4, pixels?.size)
+                while (pixels == null && System.currentTimeMillis() < deadline) { pixels = art.poll(uri); Thread.sleep(20) }; assertEquals(240*320*4, pixels?.size)
             } finally { art.close() }
             val id = db.snapshot().substringBefore('\t'); db.favorite(id, true); db.record(id, 61)
             scan("normal"); val row = db.snapshot().trim().split('\t'); assertEquals("1", row[5]); assertEquals("61", row[7]); assertEquals(1, db.snapshot().trim().lines().size)

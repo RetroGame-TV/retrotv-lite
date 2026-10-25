@@ -57,23 +57,28 @@ class RetroActivity : SDLActivity() {
         val bitmap = Bitmap.createBitmap(1024, 1792, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
         val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = Color.WHITE; textSize = 30f; typeface = Typeface.create("sans-serif", Typeface.NORMAL)
+            color = Color.WHITE; textSize = 40f; typeface = Typeface.create("sans-serif", Typeface.NORMAL)
         }
         for (weight in 0..1) for (code in 32..255) {
             paint.typeface = Typeface.create("sans-serif", if (weight == 1) Typeface.BOLD else Typeface.NORMAL)
             val i = code - 32 + weight * 224
-            canvas.drawText(code.toChar().toString(), (i % 16 * 64 + 4).toFloat(), (i / 16 * 64 + 36).toFloat(), paint)
+            canvas.drawText(code.toChar().toString(), (i % 16 * 64 + 4).toFloat(), (i / 16 * 64 + 46).toFloat(), paint)
         }
         val bytes = ByteBuffer.allocate(bitmap.byteCount)
         bitmap.copyPixelsToBuffer(bytes); bitmap.recycle()
         return bytes.array()
     }
     fun fontMetrics(value: String): String {
-        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { textSize = 30f; typeface = Typeface.create("sans-serif", Typeface.NORMAL) }
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { textSize = 40f; typeface = Typeface.create("sans-serif", Typeface.NORMAL) }
         return (0..1).flatMap { weight ->
             paint.typeface = Typeface.create("sans-serif", if (weight == 1) Typeface.BOLD else Typeface.NORMAL)
             (32..255).map { paint.measureText(it.toChar().toString()).toString() }
         }.joinToString(",")
+    }
+    fun resume(value: String): String {
+        if (!value.matches(Regex("[a-zA-Z0-9_-]{1,160}"))) return "0"
+        val snapshot = File(filesDir, "saves/$value/resume.state")
+        return if (snapshot.isFile && snapshot.length() > 20) "1" else "0"
     }
     fun cover(uri: String): ByteArray? = artwork.poll(uri)
     fun clearArtwork(value: String): String { artwork.invalidate(); return "OK" }

@@ -1,4 +1,7 @@
 #include "ui/model.hpp"
+#include "ui/playback_profile.hpp"
+#include "ui/pixel_alpha.hpp"
+#include <map>
 #include <iostream>
 #include <stdexcept>
 using namespace rt;
@@ -16,5 +19,23 @@ int main(){
     check(coreFor("Wii").empty()&&coreFor("N64").empty(),"unproven platform enabled");
     check(profileFor("PlayStation",true).maxRomMiB==0,"disc permitted in ROM buffer");
     check(Theme::minimalTheme().cacheMiB<Theme::classic().cacheMiB,"performance budget");
-    std::cout<<"9 navigation, filtering and memory policy scenarios passed\n";
+    m.screen=Screen::Details;m.option=0;m.resumeAvailable=false;m.navigate(Action::Right);check(m.option==0,"missing resume received focus");m.resumeAvailable=true;m.navigate(Action::Right);check(m.option==1,"resume action unreachable");m.navigate(Action::Down);check(m.option==2,"secondary actions unreachable");m.navigate(Action::Down);check(m.option==3,"playback editor unreachable");m.navigate(Action::Up);check(m.option==2,"detail return focus");
+    Game game{"profile-test","Profile test","NES","test","quicknes"};std::map<std::string,std::string> prefs;
+    auto read=[&](const std::string& key){auto it=prefs.find(key);return it==prefs.end()?std::string():it->second;};
+    auto options=readPlaybackProfile(game,read);check(options.aspect=="4:3"&&options.filter=="nearest"&&options.volume==100,"unsafe playback defaults");
+    prefs[playbackKey("aspect",true,game)]="native";prefs[playbackKey("filter",true,game)]="linear";prefs[playbackKey("volume",true,game)]="50";
+    options=readPlaybackProfile(game,read);check(options.aspect=="native"&&options.filter=="linear"&&options.volume==50,"console defaults not inherited");
+    prefs[playbackKey("aspect",false,game)]="wide";prefs[playbackKey("volume",false,game)]="0";
+    options=readPlaybackProfile(game,read);check(options.aspect=="wide"&&options.volume==0,"game override ignored");
+    options=readPlaybackProfile(game,read,true);check(options.aspect=="native"&&options.volume==50,"game override leaked into console editor");
+    prefs[playbackKey("aspect",false,game)]="";prefs[playbackKey("volume",false,game)]="101";
+    options=readPlaybackProfile(game,read);check(options.aspect=="native"&&options.volume==50,"reset or invalid preference damaged defaults");
+    prefs["aspect-"+game.id]="wide";check(readPlaybackProfile(game,read).aspect=="wide","legacy aspect lost");
+    check(videoBounds("4:3",256,240).x==160&&videoBounds("4:3",256,240).w==960,"4:3 bounds incorrect");
+    check(videoBounds("native",256,240).w==768&&videoBounds("wide",256,240).w==1280,"native or wide bounds incorrect");
+    check(videoBounds("native",0,0).w==960,"invalid video dimensions unsafe");
+    check(scaledSample(-32768,25)==-8192&&scaledSample(32767,100)==32767&&scaledSample(123,0)==0,"audio scaling clipped or mute failed");
+    uint8_t pixels[]={50,25,0,128,25,15,5,0};straightAlpha(pixels,sizeof(pixels));check(pixels[0]==100&&pixels[1]==50&&pixels[3]==128&&pixels[4]==25,"premultiplied image alpha incorrect");
+    uint8_t font[]={80,80,80,80};straightAlpha(font,4,true);check(font[0]==255&&font[3]==80,"font coverage applied twice");
+    std::cout<<"Navigation, video/audio profiles, alpha and memory policies passed\n";
 }

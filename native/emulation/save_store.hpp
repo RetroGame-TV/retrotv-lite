@@ -46,6 +46,7 @@ inline void atomicWrite(const std::string& path,const std::vector<uint8_t>& b,bo
 }
 class SaveStore {
     std::string directory,gameIdentity,coreIdentity;
+    static std::string family(const std::string& value){return value.substr(0,value.find(':'));}
     static void put(std::vector<uint8_t>& b,uint32_t n){for(int i=0;i<4;++i)b.push_back(uint8_t(n>>(8*i)));}
     static uint32_t get(const std::vector<uint8_t>& b,size_t pos){return uint32_t(b.at(pos))|(uint32_t(b.at(pos+1))<<8)|(uint32_t(b.at(pos+2))<<16)|(uint32_t(b.at(pos+3))<<24);}
 public:
@@ -54,7 +55,7 @@ public:
     bool exists(bool state) const {return std::filesystem::exists(path(state));}
     void write(bool state,const std::vector<uint8_t>& payload){
         if(payload.empty())return;if(payload.size()>32*1024*1024)throw std::runtime_error("Save grande demais");
-        const std::string metadata=gameIdentity+"\n"+coreIdentity+"\n"+(state?"state":"sram");
+        const std::string metadata=gameIdentity+"\n"+(state?coreIdentity:family(coreIdentity))+"\n"+(state?"state":"sram");
         std::vector<uint8_t> out{'R','T','V','S','A','V','E','2'};put(out,uint32_t(metadata.size()));put(out,uint32_t(payload.size()));put(out,crc32(payload.data(),payload.size()));
         out.insert(out.end(),metadata.begin(),metadata.end());out.insert(out.end(),payload.begin(),payload.end());
         bool backupCurrent=true;
@@ -67,7 +68,12 @@ public:
         auto meta=get(b,8),size=get(b,12),crc=get(b,16);
         if(meta>4096||size>32*1024*1024||b.size()!=20ull+meta+size)throw std::runtime_error("Tamanho do save inválido");
         std::string metadata(b.begin()+20,b.begin()+20+meta);
-        if(metadata!=gameIdentity+"\n"+coreIdentity+"\n"+(state?"state":"sram"))throw std::runtime_error("Save de outro conteúdo ou versão do núcleo");
+        if(state){if(metadata!=gameIdentity+"\n"+coreIdentity+"\nstate")throw std::runtime_error("Save de outro conteúdo ou versão do núcleo");}
+        else {
+            auto first=metadata.find('\n'),last=metadata.rfind('\n');
+            if(first==std::string::npos||last==first||metadata.find('\n',first+1)!=last||metadata.substr(0,first)!=gameIdentity||metadata.substr(last+1)!="sram"||family(metadata.substr(first+1,last-first-1))!=family(coreIdentity))
+                throw std::runtime_error("Save de outro conteúdo ou família de núcleo");
+        }
         std::vector<uint8_t> payload(b.begin()+20+meta,b.end());if(crc32(payload.data(),payload.size())!=crc)throw std::runtime_error("Checksum do save inválido");return payload;
     }
 };

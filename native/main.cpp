@@ -35,18 +35,42 @@ int main(int, char**) {
         auto rows=model.visible();for(size_t i=0;i<rows.size();++i)if(model.games[rows[i]].id==old)model.selection=int(i);
     };
     loadCatalog(); std::string revision=platform.call("revision"); uint32_t lastRefresh=0;
-    Session session(renderer);int pendingAction=-1,remapTarget=-1;uint64_t nextFrame=0;
+    Session session(renderer);ui.pausedBackdrop=[&]{session.draw();};int pendingAction=-1,remapTarget=-1;uint64_t nextFrame=0;
     const std::array<int,16> defaultMapping={SDL_CONTROLLER_BUTTON_B,SDL_CONTROLLER_BUTTON_Y,SDL_CONTROLLER_BUTTON_BACK,SDL_CONTROLLER_BUTTON_START,SDL_CONTROLLER_BUTTON_DPAD_UP,SDL_CONTROLLER_BUTTON_DPAD_DOWN,SDL_CONTROLLER_BUTTON_DPAD_LEFT,SDL_CONTROLLER_BUTTON_DPAD_RIGHT,SDL_CONTROLLER_BUTTON_A,SDL_CONTROLLER_BUTTON_X,SDL_CONTROLLER_BUTTON_LEFTSHOULDER,SDL_CONTROLLER_BUTTON_RIGHTSHOULDER,-2,-3,SDL_CONTROLLER_BUTTON_LEFTSTICK,SDL_CONTROLLER_BUTTON_RIGHTSTICK};
     std::map<SDL_JoystickID,std::array<int,16>> mappings;std::array<SDL_JoystickID,2> players{{-1,-1}};
     auto controllerKey=[](SDL_GameController* c){char guid[64];SDL_JoystickGetGUIDString(SDL_JoystickGetGUID(SDL_GameControllerGetJoystick(c)),guid,sizeof(guid));return std::string("pad-")+guid;};
     std::array<int16_t,16> remotePulse{};
     bool running=true,background=false; std::map<SDL_JoystickID,SDL_GameController*> controllers;
+    auto refreshPlayback=[&]{
+        auto reader=[&](const std::string& key){return platform.call("setting",key);};
+        auto profile=readPlaybackProfile(model.profileGame,reader,model.profileSystem);
+        model.profileAspect=profile.aspect;model.profileFilter=profile.filter;model.profileVolume=profile.volume;
+        model.profileHint=model.profileSystem?"Padrão para novos jogos deste console. Ajustes do jogo têm prioridade.":"Suas escolhas ficam salvas para este jogo.";
+        if(session.active())session.applyPlayback(readPlaybackProfile(session.game,reader));
+    };
+    auto openPlayback=[&](const Game& game){model.profileGame=game;model.profileSystem=false;model.screen=Screen::Playback;model.option=0;refreshPlayback();};
     auto action=[&](Action a) {
+        if(model.screen==Screen::Playback){
+            if(a==Action::Back||(a==Action::Ok&&model.option==5)){model.screen=session.active()?Screen::QuickMenu:Screen::Details;model.option=session.active()?5:3;return;}
+            if(a==Action::Up)model.option=std::max(0,model.option-1);
+            if(a==Action::Down)model.option=std::min(5,model.option+1);
+            if(a==Action::Ok){
+                auto write=[&](const std::string& field,const std::string& value){platform.call("setting",playbackKey(field,model.profileSystem,model.profileGame)+"\t"+value);};
+                if(model.option==0)model.profileSystem=!model.profileSystem;
+                if(model.option==1)write("aspect",nextAspect(model.profileAspect));
+                if(model.option==2)write("filter",model.profileFilter=="nearest"?"linear":"nearest");
+                if(model.option==3)write("volume",std::to_string(model.profileVolume==100?0:std::min(100,model.profileVolume+25)));
+                if(model.option==4){write("aspect","");write("filter","");write("volume","");if(!model.profileSystem)platform.call("setting","aspect-"+model.profileGame.id+"\t");}
+                refreshPlayback();
+            }
+            return;
+        }
         if(!session.active()&&model.screen==Screen::Library&&model.sidebar&&a==Action::Back){saveFocus();running=false;return;}
         if(!session.active()&&model.screen==Screen::Library&&!model.sidebar&&model.visible().empty()&&a==Action::Ok) {
+            if(!model.games.empty()){if(model.selection==0){model.selectTab(0);model.sidebar=false;}else platform.call("request","choose");return;}
             if(model.selection==0){platform.call("request","choose");return;}
             Game demo;demo.id="retrotv-demo-cc0";demo.title="Teste original RetroTV";demo.system="NES";demo.uri="demo:retrotv-pad-test.nes";demo.core="quicknes";
-            if(!session.launch(demo,platform,false)){model.screen=Screen::Error;model.message=session.error;}else{nextFrame=0;model.screen=Screen::QuickMenu;model.option=0;}return;
+            ui.clearCovers();platform.call("clearArtwork");if(!session.launch(demo,platform,false)){model.screen=Screen::Error;model.message=session.error;}else{nextFrame=0;model.sessionGame=session.game;model.screen=Screen::QuickMenu;model.option=0;}return;
         }
         if(model.screen==Screen::Controls){
             if(a==Action::Back){remapTarget=-1;model.screen=session.active()?Screen::QuickMenu:Screen::Settings;model.option=0;return;}
@@ -78,11 +102,11 @@ int main(int, char**) {
             }
             if(a==Action::Up)model.option=std::max(0,model.option-1);
             if(a==Action::Down)model.option=std::min(8,model.option+1);
-            if(a==Action::Back||(a==Action::Ok&&model.option==0)){session.resume();nextFrame=0;return;}
+            if(a==Action::Back||(a==Action::Ok&&model.option==0)){ui.clearCovers();platform.call("clearArtwork");session.resume();nextFrame=0;return;}
             if(a==Action::Ok){
                 if(model.option==1||model.option==2||model.option==3||model.option==7){pendingAction=model.option;model.screen=Screen::Confirm;model.message=model.option==7?"Salvar Quick Resume e sair da sessão?\nSe o núcleo não suportar snapshot, manter SRAM.\nOK confirma · Voltar cancela":"Confirmar esta operação?\nSave anterior fica em arquivo .prev.\nAo carregar estado, SRAM atual é preservada.\nOK confirma · Voltar cancela";}
                 if(model.option==4){model.screen=Screen::Controls;model.option=0;model.message="OK: remapear com um botão do gamepad.\nConfiguração salva por modelo de controle.";return;}
-                if(model.option==5){session.stretch=!session.stretch;platform.call("setting","aspect-"+session.game.id+"\t"+(session.stretch?"wide":"4:3"));}
+                if(model.option==5){openPlayback(session.game);return;}
                 if(model.option==6&&!session.host.switchDisc()){model.screen=Screen::Error;model.message="Troca de disco não disponível neste núcleo.";}
                 if(model.option==8){model.screen=Screen::Diagnostics;model.message=session.metrics();}
             }
@@ -100,8 +124,8 @@ int main(int, char**) {
                 platform.call("setting",std::string("minimal\t")+(model.minimal?"1":"0"));
                 platform.call("setting",std::string("performance\t")+(model.performance?"1":"0"));
                 if(model.option==7){model.screen=Screen::Diagnostics;model.message=platform.call("diagnostics");}
-                if(model.option==8){model.screen=Screen::Diagnostics;model.message="RetroTV Lite · 0.2.0-dev\nCódigo original GPL-2.0-or-later\nSDL2: zlib · QuickNES: GPL-2.0-or-later\nFontes e licenças acompanham o projeto.\nSem jogos comerciais ou BIOS incluídos.\nVoltar retorna à biblioteca.";}
-                if(model.option==9){Game demo;demo.id="retrotv-demo-cc0";demo.title="Teste original RetroTV";demo.system="NES";demo.uri="demo:retrotv-pad-test.nes";demo.core="quicknes";if(!session.launch(demo,platform,false)){model.screen=Screen::Error;model.message=session.error;}else{nextFrame=0;model.screen=Screen::QuickMenu;model.option=0;}}
+                if(model.option==8){model.screen=Screen::Diagnostics;model.message="RetroTV Lite · 0.3.0-dev\nCódigo original GPL-2.0-or-later\nSDL2: zlib · QuickNES: GPL-2.0-or-later\nFontes e licenças acompanham o projeto.\nSem jogos comerciais ou BIOS incluídos.\nVoltar retorna à biblioteca.";}
+                if(model.option==9){Game demo;demo.id="retrotv-demo-cc0";demo.title="Teste original RetroTV";demo.system="NES";demo.uri="demo:retrotv-pad-test.nes";demo.core="quicknes";ui.clearCovers();platform.call("clearArtwork");if(!session.launch(demo,platform,false)){model.screen=Screen::Error;model.message=session.error;}else{nextFrame=0;model.sessionGame=session.game;model.screen=Screen::QuickMenu;model.option=0;}}
                 if(model.option==4)platform.call("request","export");
                 if(model.option==5){pendingAction=100;model.screen=Screen::Confirm;model.message="Restaurar um backup substituirá os saves atuais.\nUma cópia completa anterior será preservada.\nConfirme apenas backups do RetroTV.\nOK: escolher backup · Voltar: cancelar";}
                 if(model.option==6){model.screen=Screen::Controls;model.option=0;model.message="OK: remapear com um botão do gamepad.\nConfiguração salva por modelo de controle.";}
@@ -111,14 +135,16 @@ int main(int, char**) {
         }
         if(model.screen==Screen::Details && a==Action::Ok) {
             auto* g=model.selected(); if(!g)return;
-            if(model.option==2){platform.call("request","favorite\t"+g->id+"\t"+(g->favorite?"0":"1"));loadCatalog();return;}
-            if(model.option==3){model.screen=Screen::Library;return;}
+            if(model.option==2){bool leave=model.tab==3&&g->favorite;platform.call("request","favorite\t"+g->id+"\t"+(g->favorite?"0":"1"));loadCatalog();if(leave)model.screen=Screen::Library;return;}
+            if(model.option==3){openPlayback(*g);return;}
+            if(model.option==4){model.screen=Screen::Library;return;}
             bool resume=model.option==1;
-            if(!session.launch(*g,platform,resume)){model.screen=Screen::Error;model.message=session.error+"\nVoltar retorna à biblioteca.";}
-            else {nextFrame=0;model.screen=Screen::QuickMenu;model.option=0;}
+            ui.clearCovers();platform.call("clearArtwork");if(!session.launch(*g,platform,resume)){model.screen=Screen::Error;model.message=session.error+"\nVoltar retorna à biblioteca.";}
+            else {nextFrame=0;model.sessionGame=session.game;model.screen=Screen::QuickMenu;model.option=0;}
             return;
         }
         model.navigate(a);
+        if(model.screen==Screen::Details){auto* selected=model.selected();model.resumeAvailable=selected&&platform.call("resume",selected->id)=="1";if(a==Action::Ok&&model.tab==1&&model.resumeAvailable)model.option=1;}
         saveFocus();
     };
     while(running) {
@@ -168,8 +194,8 @@ int main(int, char**) {
             if(now<nextFrame)SDL_Delay(Uint32((nextFrame-now)*1000/SDL_GetPerformanceFrequency()));
             session.tick();if(session.host.state==SessionState::Paused&&!session.error.empty()){model.screen=Screen::Error;model.message=session.error;}session.draw();SDL_RenderPresent(renderer);session.presented();
             nextFrame+=uint64_t(double(SDL_GetPerformanceFrequency())/session.host.av.timing.fps);if(SDL_GetPerformanceCounter()>nextFrame+SDL_GetPerformanceFrequency()/4)nextFrame=SDL_GetPerformanceCounter();
-        }else {ui.draw(model,platform.call("status"));SDL_RenderPresent(renderer);SDL_Delay(model.performance?20:4);}
+        }else {model.sessionActive=session.active();ui.draw(model,platform.call("status"));SDL_RenderPresent(renderer);SDL_Delay(model.performance?20:4);}
     }
     session.finish(platform);for(auto& c:controllers)SDL_GameControllerClose(c.second);
-    ui.clearCovers();SDL_DestroyTexture(atlas);SDL_DestroyRenderer(renderer);SDL_DestroyWindow(window);SDL_Quit();return 0;
+    ui.release();SDL_DestroyTexture(atlas);SDL_DestroyRenderer(renderer);SDL_DestroyWindow(window);SDL_Quit();return 0;
 }

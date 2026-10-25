@@ -20,3 +20,5 @@ Qualquer distribuição de APK deve acompanhar o código correspondente exato, e
 Nenhuma BIOS, ROM comercial, imagem de capa protegida, credencial ou chave de assinatura release é incluída. O arquivo BIOS selecionado é armazenado somente no dispositivo do proprietário. Scraper/rede desabilitados e sem permissão INTERNET no app.
 
 Lint mantém validações no código do app. Quatro arquivos Java SDL têm exceções específicas MissingPermission para rotinas opcionais de Steam BLE, captura de microfone e vibração que RetroTV não invoca; não se adicionaram permissões desnecessárias para calar esses avisos. Gamepads pareados são recebidos pelo sistema de input Android.
+
+A entrega 0.3.0-armv7-pessoal é a variante privada: inclui também Snes9x2005, PicoDrive e FBNeo CPS12. Os avisos integrais principais acompanham este APK em Snes9x2005.txt, PicoDrive.txt e FBNeo.txt; os demais avisos por componente estão no ZIP de fontes correspondente. Uso pessoal de desenvolvimento; nenhuma autorização de publicação/comercialização é concedida por esta entrega.

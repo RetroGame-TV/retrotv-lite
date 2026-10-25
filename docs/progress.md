@@ -73,3 +73,12 @@ Solicitação posterior do usuário antecipou a direção visual. Barra lateral 
 Capas locais PNG/JPEG/WebP via SAF, worker e caches limitados implementados. Banco migra v1/v2→v3 sem substituir linhas, favoritos, histórico ou caminhos. Núcleo, SRAM e protocolo de save state permanecem os mesmos. Ilustrações e cartazes de teste são originais; referência Delta usada apenas para análise visual.
 
 Comandos desta revisão: Gradle x86 `:app:assembleDebug :app:assembleDebugAndroidTest -PtestAbi=x86`; AndroidJUnitRunner; host `cmake --build`/`ctest`; Gradle ARMv7 `:app:assembleDebug :app:testDebugUnitTest :app:lintDebug :app:assembleRelease`. Builds passaram, lint 0 erros, JUnit 7/7, CTest 3/3 e Android 4/4. Auditoria ARMv7 e assinatura debug v2 passaram. Capturas reais incluem Galeria, Minimal, detalhes, ajustes e pausa. Veja `visual-validation-0.2.0.md`; logs e screenshots acompanham `outputs/evidence/design-0.2.0/` na entrega. A Philco física continua pendente.
+
+
+## Refinamento e perfis · 0.3.0-dev
+
+Direção 0.2 mantida e refinada: proporções das capas, tipografia-base de 40 px no mesmo atlas, correção de alpha Android→SDL, formas com antialiasing, foco sem corte e rolagem de cinco capas com próxima parcial. Detalhes distinguem início/continuação; pausa identifica a sessão real. Estados vazios oferecem recuperação contextual. Nenhum asset de Delta/RetroArch foi copiado.
+
+Editor de proporção/filtro/volume por jogo e console implementado, persistente e aplicado ao retomar. Demais opções avançadas do perfil (núcleo/frameskip/remapeamento por console) continuam pendentes. SRAM passou a validar família do núcleo e tamanho, preservando compatibilidade após recompilação; snapshots mantêm identidade exata do binário. Testes usam metadados antigos reais do envelope RTVSAVE2.
+
+CTest 3/3, JUnit JVM 7/7, Android 4/4 e lint 0 erros/53 avisos. Navegação, tema Minimal, perfil herdado/reset, partida, Quick Resume e rejeição de snapshot antigo observados no Android TV virtual. APK debug ARMv7 pessoal reúne os cinco núcleos já compilados; auditoria ELF32/assinatura v2/permissões passou. Apenas NES executado; outros consoles e TV física continuam pendentes. Consulte visual-validation-0.3.0.md para comandos e limites. Projeto, SDK e build permanecem no disco D.

@@ -20,6 +20,18 @@ int main(int argc,char**argv){
         SaveStore store(argv[3],"game:crc","QuickNES:pin");store.write(true,snapshot);check(store.read(true)==snapshot,"save roundtrip");
         auto ram=h.sram();check(!ram.empty(),"battery-backed SRAM unavailable");ram[0]=0x5a;check(h.setSram(ram),"SRAM write rejected");store.write(false,ram);check(store.read(false)==ram,"SRAM disk roundtrip failed");
         h.close();check(h.open(argv[1],argv[2],rom,".","."),"SRAM reopen failed");check(h.setSram(store.read(false)),"SRAM restore rejected");for(int i=0;i<5;++i)h.run();check(h.sram()[0]==0x5a,"SRAM did not survive core reopen");
+        // Read the exact old RTVSAVE2 SRAM metadata shape after a core rebuild.
+        std::string legacyMeta="game:crc\nQuickNES:old-version:old-build\nsram";
+        std::vector<uint8_t> legacy{'R','T','V','S','A','V','E','2'};
+        auto append32=[&](uint32_t value){for(int i=0;i<4;++i)legacy.push_back(uint8_t(value>>(8*i)));};
+        append32(uint32_t(legacyMeta.size()));append32(uint32_t(ram.size()));append32(crc32(ram.data(),ram.size()));
+        legacy.insert(legacy.end(),legacyMeta.begin(),legacyMeta.end());legacy.insert(legacy.end(),ram.begin(),ram.end());atomicWrite(store.path(false),legacy);
+        SaveStore updated(argv[3],"game:crc","QuickNES:new-version:new-build");
+        check(updated.read(false)==ram&&h.setSram(updated.read(false)),"legacy SRAM did not survive a core rebuild");
+        bool snapshotRejected=false;try{updated.read(true);}catch(...){snapshotRejected=true;}check(snapshotRejected,"snapshot from a different core build accepted");
+        bool otherCoreRejected=false;try{SaveStore other(argv[3],"game:crc","OtherCore:pin");other.read(false);}catch(...){otherCoreRejected=true;}check(otherCoreRejected,"SRAM from a different core family accepted");
+        updated.write(false,ram);check(store.read(false)==ram,"stable SRAM metadata not backward-readable");
+        check(!h.setSram(std::vector<uint8_t>(ram.size()+1)),"wrong SRAM payload size accepted by host");
         auto changed=snapshot;changed[0]^=1;store.write(true,changed);check(std::filesystem::exists(store.path(true)+".prev"),"no recovery backup");
         bool rejected=false;try{SaveStore wrong(argv[3],"different-game","QuickNES:pin");wrong.read(true);}catch(...){rejected=true;}check(rejected,"wrong content accepted");
         auto corrupt=readBounded(store.path(true));corrupt.back()^=1;atomicWrite(store.path(true),corrupt);rejected=false;try{store.read(true);}catch(...){rejected=true;}check(rejected,"corrupt payload accepted");

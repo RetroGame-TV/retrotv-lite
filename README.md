@@ -1,10 +1,10 @@
 # RetroTV Lite
 
-App Android TV nativo C++17/SDL2/GLES2 + Kotlin/SAF, destinado à Philco PTV40G71AGBL (Android 11, **ARMv7 de 32 bits**). Interface original, offline e navegável por controle remoto. Versão de desenvolvimento **0.2.0-dev**; não é release 1.0 certificada.
+App Android TV nativo C++17/SDL2/GLES2 + Kotlin/SAF, destinado à Philco PTV40G71AGBL (Android 11, **ARMv7 de 32 bits**). Interface original, offline e navegável por controle remoto. Versão de desenvolvimento **0.3.0-dev**; não é release 1.0 certificada.
 
-Inclui biblioteca SQLite, pastas SAF, favoritos/recentes, Galeria com capas locais/Minimal monocromático, modo performance, host Libretro, menu rápido, SRAM, save states/Quick Resume condicionais, backup/restore validado e controles com dois slots/remapeamento. Demo NES original CC0 permite testar o fluxo sem obter ROM comercial. Para usar capas: `Nome do jogo.png` (ou jpg/jpeg/webp) ao lado da ROM com o mesmo nome base; atualizar biblioteca após mudanças. Veja [especificação visual](docs/ui-spec.md).
+Inclui biblioteca SQLite, pastas SAF, favoritos/recentes, Galeria com capas locais/Minimal monocromático, modo performance, host Libretro (frontend próprio, sem incorporar a interface do RetroArch), perfis persistentes de proporção/filtro/volume, menu rápido, SRAM, save states/Quick Resume condicionais, backup/restore validado e controles com dois slots/remapeamento. Demo NES original CC0 permite testar o fluxo sem obter ROM comercial. Para usar capas: `Nome do jogo.png` (ou jpg/jpeg/webp) ao lado da ROM com o mesmo nome base; atualizar biblioteca após mudanças. Veja [especificação visual](docs/ui-spec.md).
 
-**Validação e limitações:** leia [docs/progress.md](docs/progress.md) e [matriz dos cores](docs/core-compatibility.md). O APK ARMv7 compila; demo NES foi executada no Windows e Android TV virtual **x86**. Não houve instalação na Philco, teste de Bluetooth/USB físico nem execução de jogos SNES/Mega Drive/Arcade/PS1. N64 está desabilitado; Wii está fora do escopo. Scraper, perfis de usuário e editor avançado de perfil por jogo não foram implementados.
+**Validação e limitações:** leia [docs/progress.md](docs/progress.md) e [matriz dos cores](docs/core-compatibility.md). O APK ARMv7 compila; demo NES foi executada no Windows e Android TV virtual **x86**. Não houve instalação na Philco, teste de Bluetooth/USB físico nem execução de jogos SNES/Mega Drive/Arcade/PS1. N64 está desabilitado; Wii está fora do escopo. Perfis de imagem/áudio por jogo e console estão disponíveis. Scraper, perfis de usuário e editor de núcleo/frameskip/remapeamento por console continuam pendentes.
 
 ## Compilar no Windows
 
@@ -39,7 +39,7 @@ Habilite depuração Android TV e conecte ADB pelo método suportado pela TV. Co
 .\scripts\adb-install.ps1 -Serial 'SERIAL_DA_TV' -Apk '.\app\build\outputs\apk\debug\app-debug.apk'
 ```
 
-Abra RetroTV Lite pelo launcher. Use D-pad/OK/Voltar; Menu abre configurações. Primeiro teste: **Configurações > Testar demonstração original NES**. Depois escolha a subpasta USB contendo seu acervo legal. Para PS1, importe sua BIOS; formatos e VFS ainda dependem de validação. Nunca inclua jogos/BIOS sem direitos de uso.
+Abra RetroTV Lite pelo launcher. Use D-pad/OK/Voltar; Menu abre configurações. Primeiro teste: **Ajustes > Testar controle**. Depois escolha a subpasta USB contendo seu acervo legal. Para PS1, importe sua BIOS; formatos e VFS ainda dependem de validação. Nunca inclua jogos/BIOS sem direitos de uso.
 
 Antes de usar progresso importante, teste save convencional, snapshot, exportação e restauração com arquivos descartáveis. [Manual de saves](docs/saves.md), [controles](docs/controls.md), [USB](docs/usb-storage.md), [testar na Philco](docs/test-on-philco.md) e [troubleshooting](docs/troubleshooting.md).
 
