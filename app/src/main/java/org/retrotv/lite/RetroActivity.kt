@@ -30,7 +30,7 @@ class RetroActivity : SDLActivity() {
     private val transfers = Executors.newSingleThreadExecutor()
     private val transferBusy = AtomicBoolean(false)
     private val discAccess by lazy { DiscAccess(contentResolver) }
-    private val artwork by lazy { CoverRepository(contentResolver) }
+    private val artwork by lazy { CoverRepository(contentResolver, File(filesDir, "Games")) }
     private val mediaEvents = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             val tree = prefs.getString("tree", null)?.let { Uri.parse(it) } ?: return
@@ -55,27 +55,26 @@ class RetroActivity : SDLActivity() {
         mediaRegistered = true
     }
     private fun hasPhonePermission() = android.os.Build.VERSION.SDK_INT < 31 || checkSelfPermission(android.Manifest.permission.BLUETOOTH_CONNECT) == android.content.pm.PackageManager.PERMISSION_GRANTED
-    override fun onStart() { super.onStart(); if (prefs.getString("phoneSync","0")=="1" && hasPhonePermission()) phoneBridge.start() }
+    override fun onStart() { super.onStart(); if (prefs.getString("phoneSync","0")=="1") phoneBridge.start() }
     override fun onStop() { phoneBridge.stop(); super.onStop() }
     fun controllerContext(value:String):String { phoneBridge.publish(value); return "OK" }
+    fun phoneInput(value:String):String = phoneBridge.pollInput()
+    fun phoneLinked(value:String):String = if (phoneBridge.linked()) "1" else ""
+    fun phoneOverlay(value:String):String = phoneBridge.overlay()
     fun phone(value:String):String {
         if (prefs.getString("phoneSync","0")=="1") {
             prefs.edit().putString("phoneSync","0").apply(); phoneBridge.stop()
             return "Sincronia do celular desativada.\nO gamepad Bluetooth continua funcionando normalmente."
         }
-        if (!hasPhonePermission()) {
-            runOnUiThread { requestPermissions(arrayOf(android.Manifest.permission.BLUETOOTH_CONNECT),90) }
-            return "Autorize dispositivos próximos no aviso do Android.\nDepois conecte o RetroTV Pad à TV por Bluetooth."
-        }
+        if (!hasPhonePermission()) runOnUiThread { requestPermissions(arrayOf(android.Manifest.permission.BLUETOOTH_CONNECT),90) }
         if (!phoneBridge.start()) return phoneBridge.status
         prefs.edit().putString("phoneSync","1").apply()
-        return "Sincronia do celular ativada.\nNo celular, abra RetroTV Pad e conecte à TV.\nDeixe AUTO ligado para trocar o controle por console.\nAparelhos precisam estar pareados por Bluetooth.\nVoltar retorna à biblioteca."
+        return "Controle pelo celular ativado.\n"+phoneBridge.status+".\nNo celular, abra RetroTV Pad e toque em Conectar.\nPelo Wi-Fi, digite no celular o código que aparecer na TV.\nVoltar retorna à biblioteca."
     }
     override fun onRequestPermissionsResult(requestCode:Int,permissions:Array<out String>,grantResults:IntArray) {
         super.onRequestPermissionsResult(requestCode,permissions,grantResults)
         if(requestCode==90) {
-            if(hasPhonePermission() && phoneBridge.start())prefs.edit().putString("phoneSync","1").apply()
-            else prefs.edit().putString("phoneSync","0").apply()
+            if(prefs.getString("phoneSync","0")=="1"&&hasPhonePermission()){phoneBridge.stop();phoneBridge.start()}
         }
     }
     fun fontAtlas(): ByteArray {
@@ -119,6 +118,7 @@ class RetroActivity : SDLActivity() {
         "native" -> applicationInfo.nativeLibraryDir
         "saves" -> File(filesDir, "saves").apply { mkdirs() }.absolutePath
         "bios" -> File(filesDir, "bios").apply { mkdirs() }.absolutePath
+        "content" -> File(cacheDir, "content").apply { mkdirs() }.absolutePath
         else -> filesDir.absolutePath
     }
     fun diagnostics(value: String): String = "Android ${android.os.Build.VERSION.RELEASE}\nABI: ${android.os.Build.SUPPORTED_ABIS.joinToString()}\nPSS local: ${Debug.getPss()} KiB\nSDL2 / OpenGL ES 2.0\nQuickNES integrado; demais cores condicionais\nN64: desabilitado, sem validação GLES2\n${library.status}"
@@ -126,7 +126,7 @@ class RetroActivity : SDLActivity() {
         val p = value.split('\t')
         when (p[0]) {
             "choose" -> runOnUiThread { pickTree() }
-            "scan" -> prefs.getString("tree", null)?.let { library.scan(Uri.parse(it)) }
+            "scan" -> { localGames()?.let(library::scanLocal); prefs.getString("tree", null)?.let { library.scan(Uri.parse(it)) } }
             "favorite" -> { database.favorite(p[1], p[2] == "1"); library.generation.incrementAndGet() }
             "record" -> { database.record(p[1], p[2].toLong()); library.generation.incrementAndGet() }
             "export" -> runOnUiThread {
@@ -201,6 +201,9 @@ class RetroActivity : SDLActivity() {
     override fun onResume() {
         super.onResume()
         prefs.getString("tree", null)?.let { library.validate(Uri.parse(it)) }
+        localGames()?.let(library::scanLocal)
     }
+    /** App-private files/Games: games placed here appear without choosing a folder (TV pickers that cannot confirm a subfolder). */
+    private fun localGames(): File? = File(filesDir, "Games").apply { mkdirs() }
     override fun onDestroy() { phoneBridge.stop(); if (mediaRegistered) unregisterReceiver(mediaEvents); library.close(); artwork.close(); super.onDestroy(); transfers.shutdown(); database.close() }
 }

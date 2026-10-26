@@ -1,6 +1,7 @@
 #pragma once
 #include <libretro.h>
 #include <array>
+#include <cctype>
 #include <cstdint>
 #include <functional>
 #include <map>
@@ -52,10 +53,19 @@ public:
     std::function<void(const int16_t*,size_t)> audio;
     Host()=default; Host(const Host&)=delete;Host& operator=(const Host&)=delete;
     ~Host(){close();}
-    bool open(const std::string& core,const std::string& path,std::vector<uint8_t> data,const std::string& bios,const std::string& saves);
+    /** staging: file that receives a copy of data for cores that open the content themselves (need_fullpath); empty keeps path. */
+    bool open(const std::string& core,const std::string& path,std::vector<uint8_t> data,const std::string& bios,const std::string& saves,const std::string& staging="");
     void run();void pause();void resume();void reset();void close();
     std::vector<uint8_t> serialize(); bool unserialize(const std::vector<uint8_t>&);
     std::vector<uint8_t> sram(); bool setSram(const std::vector<uint8_t>&);
     bool switchDisc();
 };
+/** Name of the staged copy: "content.<ext>", the extension taken from the URI's last segment (SAF ids end with the file name too). */
+inline std::string stagedName(const std::string& uri,const std::string& system){
+    auto name=uri.substr(uri.find_last_of('/')+1);auto dot=name.find_last_of('.');std::string ext;
+    if(dot!=std::string::npos)ext=name.substr(dot+1);
+    bool valid=!ext.empty()&&ext.size()<=4;for(char& c:ext){if(!std::isalnum(static_cast<unsigned char>(c)))valid=false;c=char(std::tolower(static_cast<unsigned char>(c)));}
+    if(!valid)ext=system=="Master System"?"sms":system=="Mega Drive"?"md":"bin";
+    return "content."+ext;
+}
 }

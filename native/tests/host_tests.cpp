@@ -7,6 +7,9 @@ void check(bool c,const char* text){if(!c)throw std::runtime_error(text);}
 int main(int argc,char**argv){
     try{
         if(argc!=4)throw std::runtime_error("host_tests core demo scratch");
+        check(stagedName("file:///data/user/0/x/files/Games/Break%20An%20Egg.md","Mega Drive")=="content.md","file URI extension");
+        check(stagedName("content://ext/tree/a/document/primary%3AGames%2FSonic.GEN","Mega Drive")=="content.gen","SAF extension");
+        check(stagedName("content://ext/document/1234","Master System")=="content.sms"&&stagedName("content://x/a.b/c%2F..","Mega Drive")=="content.md","fallback extension");
         auto rom=readBounded(argv[2]);check(rom.size()==24592,"unexpected demo size");
         Host bad;check(!bad.open("missing-core",argv[2],rom,".","."),"missing core accepted");check(bad.state==SessionState::Failed,"failure state");
         Host h;unsigned frames=0;size_t samples=0;uint32_t first=0,last=0;

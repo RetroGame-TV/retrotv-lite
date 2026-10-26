@@ -1,0 +1,174 @@
+<!doctype html>
+<!-- Original RetroTV web pad. SPDX-License-Identifier: MIT -->
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="RetroTV Pad">
+<meta name="theme-color" content="#16141b">
+<title>RetroTV Pad</title>
+<style>
+  :root{--shell-top:#e9e8ee;--shell-bottom:#c9c7d0;--ink:#4a4656;--accent:#b79cff;--panel:#1c1a21;--panel-ink:#efeaf6;--muted:#a59db0}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+  body{background:linear-gradient(var(--shell-top),var(--shell-bottom));font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--ink)}
+  body.dark{--shell-top:#2b2933;--shell-bottom:#111015;--ink:#b4b0c0}
+  #pad{position:fixed;inset:0}
+  .c{position:absolute;display:flex;align-items:center;justify-content:center;font-weight:800;pointer-events:none}
+  .round{border-radius:50%;box-shadow:0 5px 10px rgba(0,0,0,.28),inset 0 -6px 10px rgba(0,0,0,.22),inset 0 6px 10px rgba(255,255,255,.32);color:rgba(0,0,0,.45);transition:transform .04s}
+  .round.on{transform:translateY(2px) scale(.96);box-shadow:0 0 0 3px var(--accent),inset 0 -2px 6px rgba(0,0,0,.3)}
+  .shoulder{border-radius:22px;background:linear-gradient(#dedbe8,#b7b3c6);box-shadow:0 4px 8px rgba(0,0,0,.25),inset 0 -4px 8px rgba(0,0,0,.15);color:#6d6880;font-size:20px}
+  body.dark .shoulder{background:linear-gradient(#44414e,#2a2831);color:#cfcadb}
+  .shoulder.on,.pill.on,.key.on{box-shadow:0 0 0 3px var(--accent)}
+  .pill{border-radius:999px;background:linear-gradient(#5d5b66,#3c3a44);box-shadow:inset 0 -3px 5px rgba(0,0,0,.35),0 2px 4px rgba(0,0,0,.25)}
+  .pill-label{position:absolute;font-size:11px;letter-spacing:.12em;font-weight:800;color:var(--ink);pointer-events:none}
+  .key{border-radius:50%;background:radial-gradient(circle at 40% 30%,#f4f2f8,#c7c4cf);box-shadow:0 3px 7px rgba(0,0,0,.28);color:#5d5a68;font-size:22px}
+  body.dark .key{background:radial-gradient(circle at 40% 30%,#55525e,#33313a);color:#d2cedb}
+  .dpad-arm{position:absolute;background:linear-gradient(#3a393f,#151418);border-radius:9px;box-shadow:0 6px 10px rgba(0,0,0,.35)}
+  .arrow{position:absolute;width:0;height:0;border:9px solid transparent;pointer-events:none}
+  .arrow.on{filter:drop-shadow(0 0 4px var(--accent))}
+  .ring{border-radius:50%;background:radial-gradient(circle at 35% 30%,#4a4752,#26242c 70%);box-shadow:0 8px 16px rgba(0,0,0,.45),inset 0 0 0 6px rgba(0,0,0,.25)}
+  .label{position:absolute;font-size:13px;font-weight:800;letter-spacing:.05em;color:var(--ink);pointer-events:none;white-space:nowrap}
+  #chip{position:fixed;top:max(10px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);height:38px;padding:0 18px 0 14px;border-radius:19px;background:rgba(0,0,0,.12);display:flex;align-items:center;gap:10px;font-weight:800;font-size:15px;color:var(--ink);z-index:5;white-space:nowrap}
+  body.dark #chip{background:rgba(255,255,255,.09)}
+  #dot{width:10px;height:10px;border-radius:50%;background:#e0a25a}
+  #dot.ok{background:#5fcb7a}
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.58);display:none;align-items:center;justify-content:center;z-index:10}
+  .overlay.show{display:flex}
+  .panel{background:var(--panel);color:var(--panel-ink);border-radius:24px;padding:22px 24px;width:min(640px,calc(100vw - 32px));max-height:calc(100vh - 24px);overflow:auto;box-shadow:0 18px 40px rgba(0,0,0,.5)}
+  .panel h2{margin:0 0 6px;font-size:20px}
+  .panel p{margin:4px 0 14px;color:var(--muted);font-size:14px;line-height:1.35}
+  .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin:12px 0}
+  .btn{border:0;border-radius:14px;padding:12px 6px;background:#2c2833;color:var(--panel-ink);font-weight:800;font-size:14px}
+  .btn.sel{background:#f1edf5;color:#211d29}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .row .btn{flex:1;border-radius:999px}
+  #code{width:100%;font-size:36px;letter-spacing:.4em;text-align:center;padding:10px;border-radius:14px;border:2px solid #3b3644;background:#121016;color:#fff;margin:6px 0 12px}
+  #turn{position:fixed;inset:0;background:#16141b;color:#efeaf6;display:none;align-items:center;justify-content:center;text-align:center;font-weight:800;font-size:20px;z-index:20;padding:24px}
+  @media (orientation:portrait){#turn{display:flex}}
+</style>
+</head>
+<body>
+<div id="pad"></div>
+<div id="chip"><span id="dot"></span><span id="chipText">RetroTV</span></div>
+<div class="overlay" id="sheet"><div class="panel">
+  <h2>Controle</h2><p id="status">Conectando…</p>
+  <div class="grid" id="layouts"></div>
+  <div class="row"><button class="btn" id="auto"></button><button class="btn" id="forget">Parear de novo</button><button class="btn" id="close">Fechar</button></div>
+</div></div>
+<div class="overlay" id="pair"><div class="panel">
+  <h2>Código da TV</h2><p id="pairText">Digite o código de 4 números que apareceu no canto da TV.</p>
+  <input id="code" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off">
+  <div class="row"><button class="btn sel" id="send">Conectar</button></div>
+</div></div>
+<div id="turn">Gire o celular para jogar deitado</div>
+<script>
+"use strict";
+// Same buttons as RetroTV Pad (Android): bits 0-11 gamepad, 16 Home, 17 Retornar; d-pad 1 up, 2 down, 4 left, 8 right.
+const BIT={a:1,b:2,x:4,y:8,l:16,r:32,l2:64,r2:128,select:256,start:512,home:65536,back:131072};
+const LAYOUTS=["NES","SNES","MEGA","PS1","GB","ARCADE","TV"];
+const SYSTEM={"NES":"NES","SNES":"SNES","Mega Drive":"MEGA","Master System":"MEGA","PlayStation":"PS1","Game Boy":"GB","Game Boy Color":"GB","Arcade":"ARCADE"};
+const store={get(k,d){try{const v=localStorage.getItem(k);return v===null?d:v}catch(e){return d}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}},del(k){try{localStorage.removeItem(k)}catch(e){}}};
+let layout=store.get("layout","SNES"),auto=store.get("auto","1")==="1",controls=[],pointers=new Map(),lastLine="",ws=null,ready=false;
+const pad=document.getElementById("pad");
+
+function el(cls,x,y,w,h,html){const d=document.createElement("div");d.className="c "+cls;Object.assign(d.style,{left:(x-w/2)+"px",top:(y-h/2)+"px",width:w+"px",height:h+"px"});if(html!==undefined)d.innerHTML=html;pad.appendChild(d);return d}
+function label(text,x,y,align){const d=document.createElement("div");d.className="label";d.textContent=text;pad.appendChild(d);d.style.left=(align==="left"?x:x-d.offsetWidth/2)+"px";d.style.top=(y-d.offsetHeight/2)+"px";return d}
+function button(id,mask,x,y,r,color,text){const d=el("round",x,y,r*2,r*2,text);d.style.background=`radial-gradient(circle at 38% 30%,${color}ee,${color} 55%,#00000055 120%)`;d.style.fontSize=Math.round(r*.8)+"px";controls.push({id,mask,kind:"btn",x,y,r:r+10,node:d})}
+function shoulder(id,mask,x,y,w,h,text){const d=el("shoulder",x,y,w,h,text);controls.push({id,mask,kind:"btn",x,y,w:w+16,h:h+16,node:d})}
+function key(id,mask,x,y,r,text){const d=el("key",x,y,r*2,r*2,text);controls.push({id,mask,kind:"btn",x,y,r:r+10,node:d})}
+function pill(id,mask,x,y,text){const d=el("pill",x,y,70,22);controls.push({id,mask,kind:"btn",x,y,w:96,h:56,node:d});label(text,x,y+24)}
+function arrows(x,y,dist,size){const out={};[[1,0,-1,"bottom"],[2,0,1,"top"],[4,-1,0,"right"],[8,1,0,"left"]].forEach(([bit,dx,dy,side])=>{const a=document.createElement("div");a.className="arrow";a.style.borderWidth=size+"px";a.style["border-"+side+"-color"]="#e4e3ea";a.style.left=(x+dx*dist-size)+"px";a.style.top=(y+dy*dist-size)+"px";pad.appendChild(a);out[bit]=a});return out}
+function dpadCross(x,y,s){const t=s*.36;[[x-t/2,y-s/2,t,s],[x-s/2,y-t/2,s,t]].forEach(([l,tp,w,h])=>{const d=document.createElement("div");d.className="dpad-arm";Object.assign(d.style,{left:l+"px",top:tp+"px",width:w+"px",height:h+"px"});pad.appendChild(d)});
+  controls.push({id:"dpad",kind:"dpad",x,y,r:s*.62,arrows:arrows(x,y,s*.33,Math.max(7,s*.07))})}
+
+function build(){
+  pad.innerHTML="";controls=[];pointers.clear();
+  const W=innerWidth,H=innerHeight,dark=["MEGA","ARCADE","TV"].includes(layout);document.body.classList.toggle("dark",dark);
+  const D=Math.min(H*.5,W*.27),side=Math.max(18,W*.035),cy=H*.58,dx=side+D*.62,fx=W-side-D*.62,s=D*.3;
+  if(layout==="TV"){
+    const R=Math.min(H*.36,W*.22),rx=W*.36,ry=H*.56;el("ring",rx,ry,R*2,R*2);
+    controls.push({id:"dpad",kind:"dpad",x:rx,y:ry,r:R+12,arrows:arrows(rx,ry,R*.7,Math.max(8,R*.1))});
+    button("ok",BIT.a,rx,ry,R*.34,"#4a4752","OK");controls.unshift(controls.pop());controls[0].node.style.color="#e4e1ea"; // OK wins the centre
+    const kx=W*.7,gap=Math.min(H*.26,100);
+    [["back",BIT.back,"↩","Retornar"],["home",BIT.home,"⌂","Início"],["options",BIT.start,"≡","Menu"]].forEach(([id,m,g,t],i)=>{const y=ry+(i-1)*gap;key(id,m,kx,y,32,g);label(t,kx+48,y,"left")});
+  }else{
+    dpadCross(dx,cy,D*.82);
+    const red="#d8323d",gray="#3a3a41";
+    if(layout==="NES"){button("b",BIT.b,fx-s*.95,cy+s*.1,D*.19,"#d3242c","");button("a",BIT.a,fx+s*.95,cy-s*.1,D*.19,"#d3242c","");label("B",fx-s*.95,cy+s*.1+D*.29);label("A",fx+s*.95,cy-s*.1+D*.29)}
+    if(layout==="SNES"){button("x",BIT.x,fx,cy-s,D*.17,"#2b57b8","X");button("a",BIT.a,fx+s,cy,D*.17,red,"A");button("b",BIT.b,fx,cy+s,D*.17,"#edc232","B");button("y",BIT.y,fx-s,cy,D*.17,"#1e8f4a","Y")}
+    if(layout==="PS1"){button("triangle",BIT.x,fx,cy-s,D*.17,gray,"<span style='color:#45c29c'>△</span>");button("circle",BIT.a,fx+s,cy,D*.17,gray,"<span style='color:#f06a79'>○</span>");button("cross",BIT.b,fx,cy+s,D*.17,gray,"<span style='color:#7fa6ea'>✕</span>");button("square",BIT.y,fx-s,cy,D*.17,gray,"<span style='color:#e08fd0'>□</span>")}
+    if(layout==="GB"){button("b",BIT.b,fx-s*.8,cy+s*.35,D*.18,"#94295c","");button("a",BIT.a,fx+s*.8,cy-s*.35,D*.18,"#94295c","");label("B",fx-s*.8,cy+s*.35+D*.27);label("A",fx+s*.8,cy-s*.35+D*.27)}
+    if(layout==="MEGA"){[["a",BIT.y,"A"],["b",BIT.b,"B"],["c",BIT.a,"C"]].forEach(([id,m,t],i)=>button(id,m,fx-s*1.15+i*s*1.15,cy+s*.5-i*s*.12,D*.15,gray,t));
+      [["x",BIT.l,"X"],["y",BIT.x,"Y"],["z",BIT.r,"Z"]].forEach(([id,m,t],i)=>button(id,m,fx-s*1.05+i*s*1.15,cy-s*.65-i*s*.12,D*.12,"#4c4b54",t))}
+    if(layout==="ARCADE"){const tint=["#2f86d6","#2fae72","#e6b52e"];
+      [["lp",BIT.y,"LP"],["mp",BIT.x,"MP"],["hp",BIT.l,"HP"]].forEach(([id,m,t],i)=>button(id,m,fx-s*1.15+i*s*1.15,cy-s*.55-i*s*.1,D*.15,tint[i],t));
+      [["lk",BIT.b,"LK"],["mk",BIT.a,"MK"],["hk",BIT.r,"HK"]].forEach(([id,m,t],i)=>button(id,m,fx-s*1.15+i*s*1.15,cy+s*.55-i*s*.1,D*.15,tint[i],t))}
+    const sw=Math.min(W*.2,180),sh=Math.max(40,H*.11),sy=Math.max(34,H*.1);
+    if(layout==="SNES"){shoulder("l",BIT.l,side+sw/2,sy,sw,sh,"L");shoulder("r",BIT.r,W-side-sw/2,sy,sw,sh,"R")}
+    if(layout==="PS1"){const hw=sw*.62;shoulder("l1",BIT.l,side+hw/2,sy,hw,sh,"L1");shoulder("l2",BIT.l2,side+hw*1.5+10,sy,hw,sh,"L2");shoulder("r1",BIT.r,W-side-hw/2,sy,hw,sh,"R1");shoulder("r2",BIT.r2,W-side-hw*1.5-10,sy,hw,sh,"R2")}
+    const by=H-Math.max(40,H*.11),u=Math.min(W*.1,96);
+    key("home",BIT.home,W/2-u*1.95,by,24,"⌂");pill("select",BIT.select,W/2-u*.72,by-8,layout==="MEGA"?"MODE":"SELECT");pill("start",BIT.start,W/2+u*.72,by-8,"START");key("back",BIT.back,W/2+u*1.95,by,24,"↩");
+  }
+  chip();send(true);
+}
+// Nearest-centre picking: touch areas are larger than the drawn parts.
+function pick(x,y,only){let best=null,bd=1e9;for(const c of controls){if(only&&c.kind!==only)continue;let inside;
+  if(c.w){inside=Math.abs(x-c.x)<=c.w/2&&Math.abs(y-c.y)<=c.h/2}else inside=Math.hypot(x-c.x,y-c.y)<=c.r;
+  if(!inside)continue;const d=Math.hypot(x-c.x,y-c.y);if(d<bd){bd=d;best=c}}return best}
+function dpadBits(c,x,y){const dx=x-c.x,dy=y-c.y,ax=Math.abs(dx),ay=Math.abs(dy),dead=c.r*.16;if(Math.hypot(dx,dy)<dead)return 0;let b=0;
+  if(ax>ay*.41){b|=dx<0?4:8}if(ay>ax*.41){b|=dy<0?1:2}return b}
+function state(){let buttons=0,dpad=0;for(const p of pointers.values()){if(!p.c)continue;if(p.c.kind==="dpad")dpad|=dpadBits(p.c,p.x,p.y);else buttons|=p.c.mask}return{buttons,dpad}}
+function paint(st){for(const c of controls){if(c.kind==="dpad"){for(const bit in c.arrows)c.arrows[bit].classList.toggle("on",(st.dpad&bit)!==0)}else c.node.classList.toggle("on",(st.buttons&c.mask)===c.mask&&[...pointers.values()].some(p=>p.c===c))}}
+function send(force){const st=state();paint(st);const line=`I ${st.buttons.toString(16)} ${st.dpad} 0 0 0 0`;if(!force&&line===lastLine)return;
+  if(line!==lastLine&&st.buttons|st.dpad&&navigator.vibrate)try{navigator.vibrate(8)}catch(e){}
+  lastLine=line;if(ready&&ws&&ws.readyState===1)ws.send(line)}
+pad.addEventListener("pointerdown",e=>{e.preventDefault();pointers.set(e.pointerId,{x:e.clientX,y:e.clientY,c:pick(e.clientX,e.clientY)});send()});
+pad.addEventListener("pointermove",e=>{const p=pointers.get(e.pointerId);if(!p)return;p.x=e.clientX;p.y=e.clientY;
+  if(p.c&&p.c.kind==="btn"){const n=pick(e.clientX,e.clientY,"btn");if(n)p.c=n}send()});
+for(const t of["pointerup","pointercancel","pointerleave"])pad.addEventListener(t,e=>{pointers.delete(e.pointerId);send()});
+window.addEventListener("blur",()=>{pointers.clear();send()});
+document.addEventListener("visibilitychange",()=>{if(document.hidden){pointers.clear();send()}});
+
+// ---- Connection: same pairing as the app (code shown on the TV once, then a token) ----
+function myId(){let id=store.get("id","");if(!/^[A-Za-z0-9-]{4,40}$/.test(id)){id="web-"+Array.from(crypto.getRandomValues(new Uint8Array(8)),b=>b.toString(16).padStart(2,"0")).join("");store.set("id",id)}return id}
+function setStatus(text,ok){document.getElementById("status").textContent=text;document.getElementById("dot").classList.toggle("ok",!!ok)}
+function chip(){document.getElementById("chipText").textContent=layout+(ready?(auto?" · AUTO":""):" · conectando")}
+function connect(){ready=false;chip();setStatus("Conectando à TV…",false);
+  try{ws=new WebSocket(`ws://${location.host}/ws`)}catch(e){setTimeout(connect,2000);return}
+  ws.onopen=()=>ws.send(`H ${myId()} ${store.get("token","-")}`);
+  ws.onmessage=ev=>{const line=String(ev.data);
+    if(line==="OK"){online()}
+    else if(line==="C"){showPair("Digite o código de 4 números que apareceu no canto da TV.")}
+    else if(line==="R"){showPair("Código incorreto. Confira o código no canto da TV.")}
+    else if(line.startsWith("T ")){store.set("token",line.slice(2).trim());online()}
+    else if(line.startsWith("{")){try{const m=JSON.parse(line);if(auto&&SYSTEM[m.system]&&SYSTEM[m.system]!==layout){layout=SYSTEM[m.system];build()}}catch(e){}}};
+  ws.onclose=()=>{ready=false;chip();setStatus("Conexão perdida. Tentando de novo… Abra o RetroTV na TV.",false);setTimeout(connect,2000)}}
+function online(){ready=true;hidePair();setStatus("Conectado à TV",true);chip();send(true)}
+function showPair(text){document.getElementById("pairText").textContent=text;document.getElementById("pair").classList.add("show");const i=document.getElementById("code");i.value="";setTimeout(()=>i.focus(),50)}
+function hidePair(){document.getElementById("pair").classList.remove("show")}
+document.getElementById("send").onclick=()=>{const v=document.getElementById("code").value.trim();if(/^\d{4}$/.test(v)&&ws&&ws.readyState===1)ws.send("P "+v)};
+document.getElementById("code").addEventListener("keydown",e=>{if(e.key==="Enter")document.getElementById("send").click()});
+setInterval(()=>{if(ready&&ws&&ws.readyState===1)ws.send("K")},5000);
+
+// ---- Sheet: layout, AUTO, re-pair ----
+const grid=document.getElementById("layouts");
+function sheet(){grid.innerHTML="";LAYOUTS.forEach(n=>{const b=document.createElement("button");b.className="btn"+(n===layout?" sel":"");b.textContent=n;b.onclick=()=>{layout=n;auto=false;store.set("layout",n);store.set("auto","0");close();build()};grid.appendChild(b)});
+  const a=document.getElementById("auto");a.textContent=auto?"Auto: ligado":"Auto: desligado";a.className="btn"+(auto?" sel":"");document.getElementById("sheet").classList.add("show")}
+function close(){document.getElementById("sheet").classList.remove("show")}
+document.getElementById("chip").addEventListener("click",sheet);
+document.getElementById("close").onclick=close;
+document.getElementById("auto").onclick=()=>{auto=!auto;store.set("auto",auto?"1":"0");sheet();chip()};
+document.getElementById("forget").onclick=()=>{store.del("token");close();if(ws)ws.close()};
+document.getElementById("sheet").addEventListener("click",e=>{if(e.target.id==="sheet")close()});
+
+let wake=null;async function keepAwake(){try{if(navigator.wakeLock&&!wake)wake=await navigator.wakeLock.request("screen");wake.addEventListener("release",()=>wake=null)}catch(e){}}
+document.addEventListener("pointerdown",keepAwake,{once:false});
+window.addEventListener("resize",()=>build());
+build();connect();
+</script>
+</body>
+</html>

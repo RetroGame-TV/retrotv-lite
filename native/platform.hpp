@@ -2,15 +2,24 @@
 #include <SDL.h>
 #include <jni.h>
 #include <string>
+#include <mutex>
+#include <unordered_map>
 #include <vector>
 #include "ui/pixel_alpha.hpp"
 namespace rt {
 class Platform {
     JNIEnv* env() { return static_cast<JNIEnv*>(SDL_AndroidGetJNIEnv()); }
+    // Some calls run every frame; method IDs stay valid while the activity class is loaded.
+    // Cores may reach call() from their own threads (VFS), hence the lock.
+    std::unordered_map<std::string,jmethodID> methods; std::mutex methodsLock;
+    jmethodID methodId(JNIEnv* e,jclass cls,const char* method) {
+        std::lock_guard<std::mutex> lock(methodsLock); auto cached=methods.find(method); if(cached!=methods.end())return cached->second;
+        auto mid=e->GetMethodID(cls,method,"(Ljava/lang/String;)Ljava/lang/String;"); if(mid)methods.emplace(method,mid); return mid;
+    }
 public:
     std::string call(const char* method, const std::string& value="") {
         auto* e=env(); auto activity=static_cast<jobject>(SDL_AndroidGetActivity()); auto cls=e->GetObjectClass(activity);
-        auto mid=e->GetMethodID(cls,method,"(Ljava/lang/String;)Ljava/lang/String;");
+        auto mid=methodId(e,cls,method);
         auto arg=e->NewStringUTF(value.c_str());
         auto result=static_cast<jstring>(e->CallObjectMethod(activity,mid,arg)); std::string out;
         if(e->ExceptionCheck()) { e->ExceptionDescribe(); e->ExceptionClear(); }

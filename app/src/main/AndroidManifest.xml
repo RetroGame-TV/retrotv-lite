@@ -7,6 +7,8 @@
     <uses-feature android:name="android.hardware.bluetooth" android:required="false" />
     <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <application android:label="RetroTV Lite" android:icon="@drawable/banner" android:banner="@drawable/banner" android:theme="@android:style/Theme.Material.NoActionBar.Fullscreen" android:allowBackup="false" android:extractNativeLibs="true" android:supportsRtl="true">
         <activity android:name=".RetroActivity" android:exported="true" android:screenOrientation="landscape" android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|uiMode|navigation|density" android:launchMode="singleTask">
             <intent-filter>

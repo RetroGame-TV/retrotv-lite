@@ -4,6 +4,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.net.Uri
 import android.provider.DocumentsContract as DC
+import java.io.File
 import java.util.ArrayDeque
 import java.util.UUID
 import java.util.concurrent.Executors
@@ -85,6 +86,41 @@ class UsbLibraryProvider(private val context: Context, private val db: LibraryDa
             } catch (e: Exception) {
                 status = if (e is SecurityException) "Permissão perdida: escolha a pasta novamente" else "USB: ${e.message ?: "erro de leitura"}"
             } finally { scanning.set(false); generation.incrementAndGet() }
+        }
+    }
+    /**
+     * App-private folder (files/Games): no picker and no permission, so it also works on
+     * TVs whose folder picker cannot confirm a subfolder. Cartridge games only; disc images stay on the USB path.
+     * Runs on the same single-thread executor as [scan], so the two never overlap.
+     */
+    fun scanLocal(dir: File) {
+        executor.execute {
+            val key = "local:" + dir.absolutePath
+            val scan = UUID.randomUUID().toString()
+            var count = 0
+            try {
+                dir.walkTopDown().maxDepth(6).filter { it.isFile }.forEach { file ->
+                    val relative = file.relativeTo(dir).path.replace('\\', '/')
+                    val system = CatalogRules.system("Games/" + relative.substringBeforeLast('/', ""), file.name) ?: return@forEach
+                    if (system == "PlayStation" || count >= 10000) return@forEach
+                    count++
+                    val cover = listOf("png", "jpg", "jpeg", "webp").map { File(file.parentFile, file.nameWithoutExtension + "." + it) }
+                        .firstOrNull { it.isFile && it.length() in 1..12L * 1024 * 1024 }
+                    db.upsert(ContentValues().apply {
+                        put("id", CatalogRules.stableId(key, relative)); put("tree", key)
+                        put("uri", Uri.fromFile(file).toString())
+                        put("title", CatalogRules.clean(file.nameWithoutExtension)); put("system", system)
+                        put("core", CatalogRules.core(system)); put("scan", scan); put("available", 1)
+                        put("size", file.length()); put("modified", file.lastModified())
+                        put("relative", "/$relative"); put("cover", cover?.let { Uri.fromFile(it).toString() } ?: "")
+                    })
+                }
+                db.finishScan(key, scan)
+                // Replace the "choose a USB folder" prompts, never a real USB status.
+                if (count > 0 && (status.startsWith("Escolha") || status.startsWith("Nenhuma") || status.contains("pasta do RetroTV"))) status = "$count jogos na pasta do RetroTV"
+            } catch (e: Exception) {
+                status = "Pasta do RetroTV: ${e.message ?: "erro de leitura"}"
+            } finally { generation.incrementAndGet() }
         }
     }
     fun close() { cancel(); executor.shutdown() }

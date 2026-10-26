@@ -7,7 +7,7 @@
 using namespace rt;
 void check(bool value,const char* reason){if(!value)throw std::runtime_error(reason);}
 int main(){
-    Model m;m.navigate(Action::Down);m.navigate(Action::Right);check(!m.sidebar&&m.selection==1,"empty actions unreachable");m.navigate(Action::Left);check(m.selection==0,"empty primary action unreachable");m.navigate(Action::Up);check(m.sidebar,"cannot return to navigation");m.navigate(Action::Right);check(m.tab==1,"horizontal tabs unreachable");m.navigate(Action::Down);m.navigate(Action::Ok);check(m.screen==Screen::Library,"empty collection entered details");
+    Model m;m.navigate(Action::Down);m.navigate(Action::Right);check(!m.sidebar&&m.selection==1,"empty actions unreachable");m.navigate(Action::Left);check(m.selection==0,"empty primary action unreachable");m.navigate(Action::Up);check(m.sidebar,"cannot return to navigation");m.navigate(Action::Right);check(m.tab==3,"horizontal tabs unreachable");m.navigate(Action::Down);m.navigate(Action::Ok);check(m.screen==Screen::Library,"empty collection entered details");
     m.games={{"1","One","NES","one","quicknes",false,true,2,0},{"2","Two","NES","two","quicknes",true,true,9,0},{"3","Three","SNES","three","snes9x2005",false,true,0,0}};
     m.selectTab(4);m.selection=0;m.sidebar=false;m.navigate(Action::Right);m.navigate(Action::Left);check(m.selected()->id=="1","left navigation failed");m.navigate(Action::Right);m.navigate(Action::Ok);check(m.selected()->id=="2","wrong selection");
     m.navigate(Action::Back);check(m.selected()->id=="2","details lost context");m.selectTab(5);m.selectTab(4);check(m.selected()->id=="2","tab lost focus");
@@ -37,5 +37,19 @@ int main(){
     check(scaledSample(-32768,25)==-8192&&scaledSample(32767,100)==32767&&scaledSample(123,0)==0,"audio scaling clipped or mute failed");
     uint8_t pixels[]={50,25,0,128,25,15,5,0};straightAlpha(pixels,sizeof(pixels));check(pixels[0]==100&&pixels[1]==50&&pixels[3]==128&&pixels[4]==25,"premultiplied image alpha incorrect");
     uint8_t font[]={80,80,80,80};straightAlpha(font,4,true);check(font[0]==255&&font[3]==80,"font coverage applied twice");
+    {Model h;h.games={{"a","Pokémon Azul","NES","a","quicknes",false,true,5,0},{"b","Echo","SNES","b","snes9x2005",false,true,0,0},{"c","Orbit","NES","c","quicknes",false,true,0,0}};
+     h.navigate(Action::Down);check(!h.sidebar&&h.homeRows().size()==3&&h.row==0,"home rows missing");
+     h.navigate(Action::Ok);check(h.screen==Screen::Details&&h.selected()->id=="a"&&h.resumeFirst,"continue row did not open the recent game");
+     h.navigate(Action::Back);h.navigate(Action::Down);h.navigate(Action::Right);h.navigate(Action::Ok);check(h.tab==5&&!h.sidebar,"console tile did not open its collection");
+     h.navigate(Action::Back);check(h.tab==0&&h.homeRows()[h.row]==1&&h.rowCol[1]==1,"collection did not return to its tile");
+     h.navigate(Action::Up);h.navigate(Action::Up);check(h.sidebar&&h.headerFocus==0,"home cannot reach header");
+     h.navigate(Action::Right);h.navigate(Action::Right);check(h.headerFocus==SearchItem&&h.tab==3,"search not reachable from header");
+     h.navigate(Action::Ok);check(h.screen==Screen::Search,"search did not open");
+     h.key=15;h.navigate(Action::Ok);h.key=14;h.navigate(Action::Ok);check(h.query=="po"&&h.searchResults().size()==1,"search filter");
+     check(fold("Pokémon")=="pokemon","accent folding");
+     h.key=9;h.navigate(Action::Right);check(h.inResults,"results unreachable");h.navigate(Action::Ok);check(h.screen==Screen::Details&&h.selected()->id=="a","result did not open details");
+     h.navigate(Action::Back);check(h.screen==Screen::Search,"details did not return to search");
+     h.inResults=false;h.key=45;h.navigate(Action::Ok);check(h.query=="p","delete key");
+     h.navigate(Action::Back);check(h.screen==Screen::Library&&h.sidebar&&h.headerFocus==SearchItem,"search exit lost header focus");}
     std::cout<<"Navigation, video/audio profiles, alpha and memory policies passed\n";
 }

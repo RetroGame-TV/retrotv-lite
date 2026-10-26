@@ -67,7 +67,8 @@ public:
                     auto absolute=std::filesystem::path(path).lexically_normal().string();if(absolute.rfind(biosDir+"/",0)==0||absolute.rfind(saveDir+"/",0)==0)return ::open(absolute.c_str(),O_RDONLY);return -1;
                 };host.vfs=&vfs->table;
             }
-            if(!host.open(corePath,contentPath,std::move(content),biosDir,saveDir))throw std::runtime_error(host.error);
+            const auto staging=streamed?std::string():platform.call("path","content")+"/"+stagedName(game.uri,game.system);
+            if(!host.open(corePath,contentPath,std::move(content),biosDir,saveDir,staging))throw std::runtime_error(host.error);
             saves=std::make_unique<SaveStore>(saveDir,identity,host.coreIdentity+":"+std::to_string(fileCrc(corePath)));
             auto sram=saves->read(false);if(!sram.empty()&&!host.setSram(sram))throw std::runtime_error("SRAM incompatível; original preservado");
             if(resume){auto state=saves->read(true);if(state.empty()||!host.unserialize(state))throw std::runtime_error("Quick Resume indisponível/incompatível. Use iniciar normalmente.");if(!sram.empty())host.setSram(sram);}

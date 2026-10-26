@@ -1,4 +1,5 @@
 #include "host.hpp"
+#include "save_store.hpp"
 #include <cstring>
 #include <stdexcept>
 #ifdef _WIN32
@@ -14,7 +15,7 @@ static void closeLibrary(void* handle){dlclose(handle);}
 #endif
 namespace rt {
 Host* Host::active=nullptr;
-bool Host::open(const std::string& core,const std::string& path,std::vector<uint8_t> data,const std::string& bios,const std::string& saves){
+bool Host::open(const std::string& core,const std::string& path,std::vector<uint8_t> data,const std::string& bios,const std::string& saves,const std::string& staging){
     close();error.clear();state=SessionState::Launching;
     try {
         if(active && active!=this)throw std::runtime_error("Já existe uma sessão ativa");
@@ -31,6 +32,8 @@ bool Host::open(const std::string& core,const std::string& path,std::vector<uint
         api.init();initialized=true;
         retro_system_info info{};api.get_system_info(&info);coreIdentity=std::string(info.library_name?info.library_name:"?")+":"+(info.library_version?info.library_version:"?");
         if(!info.need_fullpath && rom.empty())throw std::runtime_error("Conteúdo vazio ou grande demais para este núcleo");
+        // need_fullpath cores (PicoDrive) open the file themselves and cannot read a file:// or content:// URI.
+        if(info.need_fullpath && !rom.empty() && !staging.empty()){atomicWrite(staging,rom,false);contentPath=staging;}
         retro_game_info game{contentPath.c_str(),info.need_fullpath?nullptr:rom.data(),info.need_fullpath?0:rom.size(),nullptr};
         if(!api.load_game(&game))throw std::runtime_error("Núcleo recusou jogo. Verifique formato, BIOS e versão do ROM-set.");
         loaded=true;api.get_system_av_info(&av);

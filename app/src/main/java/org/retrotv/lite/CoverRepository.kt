@@ -12,7 +12,13 @@ import java.nio.ByteBuffer
 import java.util.concurrent.Executors
 
 /** Small asynchronous staging cache. Native UI owns at most six 240x320 textures. */
-class CoverRepository(private val resolver: ContentResolver) {
+class CoverRepository(private val resolver: ContentResolver, private val localRoot: java.io.File? = null) {
+    /** SAF covers, plus file:// covers only inside the app's own games folder (files/Games). */
+    private fun allowed(uri: Uri): Boolean = when (uri.scheme) {
+        "content" -> true
+        "file" -> localRoot != null && uri.path?.let { java.io.File(it).canonicalPath.startsWith(localRoot.canonicalPath + java.io.File.separator) } == true
+        else -> false
+    }
     private val worker = Executors.newSingleThreadExecutor()
     private val pending = HashSet<String>()
     private val failed = LinkedHashSet<String>()
@@ -24,7 +30,7 @@ class CoverRepository(private val resolver: ContentResolver) {
         ready.remove(value)?.let { return it }
         if (closed || value.isBlank() || value in pending || value in failed || pending.size >= 8) return null
         val uri = Uri.parse(value)
-        if (uri.scheme != "content") return null
+        if (!allowed(uri)) return null
         pending.add(value)
         val token = generation
         worker.execute {
