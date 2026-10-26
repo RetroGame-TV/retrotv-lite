@@ -18,9 +18,8 @@ jobs:
   android:
     runs-on: ubuntu-24.04
     steps:
+      # Submodules come after setup-gradle: its wrapper validation would reject SDL's unused android-project wrapper.
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -28,6 +27,7 @@ jobs:
       # v3 installs the removed "tools" package by default and fails on current runners.
       - uses: android-actions/setup-android@v4
       - uses: gradle/actions/setup-gradle@v4
+      - run: git submodule update --init --recursive
       - run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0' 'ndk;26.3.11579264' 'cmake;3.22.1'
       - name: Build optional GPL PS1 core from pinned sources
         shell: pwsh
