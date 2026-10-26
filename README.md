@@ -6,6 +6,18 @@ Inclui biblioteca SQLite, pastas SAF, favoritos/recentes, Galeria com capas loca
 
 **Validação e limitações:** leia [docs/progress.md](docs/progress.md) e [matriz dos cores](docs/core-compatibility.md). O APK ARMv7 compila; demo NES foi executada no Windows e Android TV virtual **x86**. Não houve instalação na Philco, teste de Bluetooth/USB físico nem execução de jogos SNES/Mega Drive/Arcade/PS1. N64 está desabilitado; Wii está fora do escopo. Perfis de imagem/áudio por jogo e console estão disponíveis. Scraper, perfis de usuário e editor de núcleo/frameskip/remapeamento por console continuam pendentes.
 
+## Como é
+
+Capturas da versão 0.7.3 no Android TV virtual (1280x720). Os jogos da biblioteca são homebrew de distribuição livre; as imagens mostram a arte de console do próprio RetroTV.
+
+| Início | Biblioteca do console |
+|---|---|
+| ![Início: Continuar, Consoles e Biblioteca](docs/images/inicio.png) | ![Biblioteca do NES com o jogo em foco no topo](docs/images/biblioteca-nes.png) |
+| **Detalhes do jogo** | **Ajustes** |
+| ![Detalhes: Jogar agora, favoritos e imagem e áudio](docs/images/detalhes.png) | ![Ajustes: pastas de jogos, aparência, saves e controles](docs/images/ajustes.png) |
+
+O controle pelo celular fica no [RetroTV Pad](https://github.com/RetroGame-TV/retrotv-pad), ou em qualquer navegador (iPhone incluso) pela porta 47801 da TV.
+
 ## Compilar no Windows
 
 Java 17+ (usado JDK 21), Gradle wrapper 8.9, AGP 8.7.3, Kotlin 2.0.21. Instale os componentes oficiais:
