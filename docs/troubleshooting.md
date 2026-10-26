@@ -12,6 +12,6 @@
 
 **Gamepad desconectado:** OK/Voltar abre pausa; reconecte. START+SELECT ou Menu/Voltar recuperam menu rápido. Layouts não reconhecidos pelo SDL precisam de mapeamento SDL adicional; não há suporte universal testado.
 
-**Áudio/performance:** compare modo Performance, jogos leves e resolução nativa. Painel mostra custo retro_run, carga e contadores locais; não é benchmark da Philco até medir no aparelho. Não habilitar filtros, Vulkan/GLES3 ou cores sem evidência.
+**Áudio/performance:** compare modo Performance, jogos leves e resolução nativa. Painel mostra custo retro_run, carga e contadores locais; não é benchmark da TV de referência até medir no aparelho. Não habilitar filtros, Vulkan/GLES3 ou cores sem evidência.
 
 **Build Windows:** use Java 17+, SDK/NDK/CMake fixados e caminho curto. `build-cores.ps1` usa caminhos absolutos e corrige objetos FBNeo longos. Perl é necessário para lista CPS1/CPS2 (Git para Windows o inclui). Nada depende de uma pasta temporária desta máquina.

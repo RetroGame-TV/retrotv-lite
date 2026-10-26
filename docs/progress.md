@@ -4,10 +4,10 @@ Não há TV conectada nem validação física. Fases são marcos de implementaç
 
 | Fase | Código | Verificação / pendências |
 |---|---|---|
-| F0 | Estrutura Gradle, Kotlin/SDL, GLES2, ARMv7 e manifesto TV | APK debug ARMv7 compilou; abertura na Philco pendente |
+| F0 | Estrutura Gradle, Kotlin/SDL, GLES2, ARMv7 e manifesto TV | APK debug ARMv7 compilou; abertura na TV de referência pendente |
 | F1 | UI original, lista virtual, detalhes, configurações, temas, D-pad/gamepad | 8 cenários C++ executados e aprovados no Windows; render/TV pendentes |
 | F2 | SAF read-only persistente, scan cancelável, SQLite, favoritos/recentes, temas | Testes Kotlin preparados; USB/ROM OEM e migração física pendentes |
-| F3 | Host Libretro + QuickNES real, áudio/vídeo/input, sessão, demo CC0 | CTest real QuickNES passou no Windows; build ARMv7 passou; 10 min/Philco pendentes |
+| F3 | Host Libretro + QuickNES real, áudio/vídeo/input, sessão, demo CC0 | CTest real QuickNES passou no Windows; build ARMv7 passou; 10 min/TV de referência pendentes |
 | F4 | Saves/Quick Resume, backup, remapeamento, 2 slots; SNES/Pico/FBNeo/PCSX compilados ARMv7 | 7 testes Kotlin e 3 CTests passaram; jogos dos cores extras, Bluetooth e USB reais pendentes |
 | F5 | Spike documentado, N64 oculto/desabilitado e gate de HW render | Sem integração GLES2 comprovada; não suportado nesta versão |
 | F6 | Build debug/release, lint, CI preparado, scripts, documentação e pacote | Testes locais e Android virtual passaram; assinatura release/CI GitHub/TV pendentes |
@@ -15,7 +15,7 @@ Não há TV conectada nem validação física. Fases são marcos de implementaç
 
 ## F0
 
-Pasta inicial vazia. Java 21 e Git disponíveis; SDK/NDK ausentes. Download oficial iniciado dentro de work, sem alterar instalação global. Dependências fixadas por gitlink. Testes físicos, PSS e FPS na Philco pendentes.
+Pasta inicial vazia. Java 21 e Git disponíveis; SDK/NDK ausentes. Download oficial iniciado dentro de work, sem alterar instalação global. Dependências fixadas por gitlink. Testes físicos, PSS e FPS na TV de referência pendentes.
 
 ## F1
 
@@ -27,7 +27,7 @@ Banco v1 com índices e atualização preservando metadados. Scan incremental de
 
 ## F3
 
-Build Gradle `:app:assembleDebug :app:testDebugUnitTest` passou em 25s após corrigir retorno Kotlin em função de corpo expressão. Host nativo e QuickNES compilados também para Windows com LLVM-MinGW; CTest 2/2 passou (políticas + execução real da demo original). Exercitados 241+ frames, áudio, input alterando frame, pause/resume, reset, serialize/unserialize, CRC/identidade/backup de saves e 10 ciclos abrir/fechar. Esses são testes em host, não Android/Philco. Programa NES de 24.592 bytes gerado no próprio projeto sob CC0. Não mede desempenho real da TV.
+Build Gradle `:app:assembleDebug :app:testDebugUnitTest` passou em 25s após corrigir retorno Kotlin em função de corpo expressão. Host nativo e QuickNES compilados também para Windows com LLVM-MinGW; CTest 2/2 passou (políticas + execução real da demo original). Exercitados 241+ frames, áudio, input alterando frame, pause/resume, reset, serialize/unserialize, CRC/identidade/backup de saves e 10 ciclos abrir/fechar. Esses são testes em host, não Android/TV de referência. Programa NES de 24.592 bytes gerado no próprio projeto sob CC0. Não mede desempenho real da TV.
 
 ## F4
 
@@ -56,7 +56,7 @@ Pesquisa upstream de Mupen64Plus-Next/ParaLLEl registrada em n64-spike.md. Falta
 | Navegação Android virtual | Demo iniciou com DPAD_CENTER/OK; menu rápido, salvar/carregar estado, saída à biblioteca e Home/retorno observados; captura real do renderer |
 | Build de cores adicionais | ARMv7 SNES/PicoDrive/PCSX/FBNeo CPS12 compilados; execução com jogos desses sistemas permanece não validada |
 | CI GitHub Actions | Workflow criado; não executado remotamente |
-| Philco / USB físico / gamepads físicos | Não disponíveis; sem instalação, FPS/PSS ou compatibilidade afirmados |
+| TV de referência / USB físico / gamepads físicos | Não disponíveis; sem instalação, FPS/PSS ou compatibilidade afirmados |
 
 A revalidação do USB no resume é uma consulta leve ao documento raiz, sem rescan completo. Eventos de montagem iniciam scan; remoção revalida a árvore e marca indisponibilidade. O provider OEM real ainda precisa ser testado. Lint passou com exceções **somente nas APIs opcionais de quatro arquivos SDL**, descritas em licenses.md. Nenhuma permissão INTERNET, microfone, Bluetooth scanning ou armazenamento irrestrito foi adicionada.
 
@@ -64,7 +64,7 @@ Entrega fora da árvore do código: APK debug instalável, APK release sem assin
 
 ## F7 e escopo restante
 
-Adiado conforme gate do plano: scraper opt-in, perfis de usuário, previews em vídeo e personalização avançada exigem primeiro fluxo principal comprovado no hardware. Também não foram concluídos editor avançado de perfil por jogo/console, reconhecimento universal de gamepads nem teste físico dos consoles adicionais. A versão de desenvolvimento não é 1.0 completa/validada. Prioridade seguinte é executar `docs/test-on-philco.md` com arquivos legais do proprietário.
+Adiado conforme gate do plano: scraper opt-in, perfis de usuário, previews em vídeo e personalização avançada exigem primeiro fluxo principal comprovado no hardware. Também não foram concluídos editor avançado de perfil por jogo/console, reconhecimento universal de gamepads nem teste físico dos consoles adicionais. A versão de desenvolvimento não é 1.0 completa/validada. Prioridade seguinte é executar `docs/test-on-tv.md` com arquivos legais do proprietário.
 
 ## Revisão visual · 0.2.0-dev
 
@@ -72,7 +72,7 @@ Solicitação posterior do usuário antecipou a direção visual. Barra lateral 
 
 Capas locais PNG/JPEG/WebP via SAF, worker e caches limitados implementados. Banco migra v1/v2→v3 sem substituir linhas, favoritos, histórico ou caminhos. Núcleo, SRAM e protocolo de save state permanecem os mesmos. Ilustrações e cartazes de teste são originais; referência Delta usada apenas para análise visual.
 
-Comandos desta revisão: Gradle x86 `:app:assembleDebug :app:assembleDebugAndroidTest -PtestAbi=x86`; AndroidJUnitRunner; host `cmake --build`/`ctest`; Gradle ARMv7 `:app:assembleDebug :app:testDebugUnitTest :app:lintDebug :app:assembleRelease`. Builds passaram, lint 0 erros, JUnit 7/7, CTest 3/3 e Android 4/4. Auditoria ARMv7 e assinatura debug v2 passaram. Capturas reais incluem Galeria, Minimal, detalhes, ajustes e pausa. Veja `visual-validation-0.2.0.md`; logs e screenshots acompanham `outputs/evidence/design-0.2.0/` na entrega. A Philco física continua pendente.
+Comandos desta revisão: Gradle x86 `:app:assembleDebug :app:assembleDebugAndroidTest -PtestAbi=x86`; AndroidJUnitRunner; host `cmake --build`/`ctest`; Gradle ARMv7 `:app:assembleDebug :app:testDebugUnitTest :app:lintDebug :app:assembleRelease`. Builds passaram, lint 0 erros, JUnit 7/7, CTest 3/3 e Android 4/4. Auditoria ARMv7 e assinatura debug v2 passaram. Capturas reais incluem Galeria, Minimal, detalhes, ajustes e pausa. Veja `visual-validation-0.2.0.md`; logs e screenshots acompanham `outputs/evidence/design-0.2.0/` na entrega. A TV de referência física continua pendente.
 
 
 ## Refinamento e perfis · 0.3.0-dev
@@ -94,12 +94,12 @@ Busca com campo, teclado navegável por D-pad (letras, números, espaço, apagar
 
 Ilustrações de console originais em `native/ui/iso.hpp`: projeção isométrica 30°, faces sólidas por orientação, um acento por figura, supersampling em textura alvo e cache limitado (6 MiB, liberado ao abrir jogo, pouca memória ou reset de alvo). Usadas no cartaz sem capa, prateleira de consoles, Minimal, estados vazios, Ajustes e pausa.
 
-Executado: CTest de políticas no host com 13 novos cenários de home/busca; build x86 e AndroidJUnitRunner 5/5 no Android TV 11 virtual; navegação e capturas reais da home, busca, detalhes e coleção vazia. ARMv7, Philco e jogos dos demais núcleos continuam como nas versões anteriores.
+Executado: CTest de políticas no host com 13 novos cenários de home/busca; build x86 e AndroidJUnitRunner 5/5 no Android TV 11 virtual; navegação e capturas reais da home, busca, detalhes e coleção vazia. ARMv7, TV de referência e jogos dos demais núcleos continuam como nas versões anteriores.
 
 ## Controle pelo celular sem HID · 0.5.1-dev
 A ponte do celular agora também recebe o controle, não só envia metadados: Bluetooth RFCOMM (aparelhos pareados) e Wi-Fi local (TCP 47800, anunciado por NSD `_retrotv._tcp.`). No Wi-Fi o celular é aceito após digitar o código de 4 dígitos que a TV mostra por 90 s no canto da tela; depois guarda um token aleatório e reconecta sem código. Linhas `I <botões> <dpad> <eixos>` alimentam um controle virtual SDL ("RetroTV Pad"), liberado quando o celular sai. Linhas `K` só mantêm a conexão (a TV derruba celular mudo após 15 s). Estados que chegam juntos esperam numa fila de até 4, para um toque rápido durar pelo menos um quadro.
 
-Executado: JUnit JVM 10/10 (inclui fila de entrada), AndroidJUnitRunner 5/5 no Android TV 11 virtual, lint 0 erros, build ARMv7 pessoal. Ponta a ponta com dois emuladores (TV e "celular") via Wi-Fi: código exibido, código errado recusado, código certo aceito, reconexão por token sem código, conexão parada estável por mais de 37 s, toques rápidos de direcional movendo o foco da TV, primeiro toque após reconectar sem perda. RFCOMM entre aparelhos e Philco física continuam pendentes.
+Executado: JUnit JVM 10/10 (inclui fila de entrada), AndroidJUnitRunner 5/5 no Android TV 11 virtual, lint 0 erros, build ARMv7 pessoal. Ponta a ponta com dois emuladores (TV e "celular") via Wi-Fi: código exibido, código errado recusado, código certo aceito, reconexão por token sem código, conexão parada estável por mais de 37 s, toques rápidos de direcional movendo o foco da TV, primeiro toque após reconectar sem perda. RFCOMM entre aparelhos e TV de referência física continuam pendentes.
 
 ## Ajustes de desempenho do controle pelo celular · 0.5.2-dev
 A TV só consulta a entrada do celular a cada quadro enquanto há um celular conectado (o estado é lido junto da atualização de 500 ms que já existia); antes a chamada JNI rodava todo quadro com a opção apenas ligada. `Platform::call` guarda os `jmethodID` já resolvidos (com trava, porque núcleos podem chamar a VFS de outra thread).
@@ -114,27 +114,27 @@ Executado: testes nativos de política, JUnit JVM 10/10, lint 0 erros, build x86
 ## Botão Início · 0.6.0-dev
 Home/Guide (do celular ou de um controle físico) leva ao menu principal: fora de um jogo, volta a Início com o foco na ação principal; dentro de um jogo, pausa já em "Salvar e voltar à biblioteca", para um toque acidental não perder o progresso. O protocolo do celular aceita o bit 16 (Home) e continua recusando os bits 12–15.
 
-Executado: testes nativos de política, JUnit JVM 10/10, lint 0 erros, build x86 e ARMv7. No Android TV virtual: Menu do celular abre Ajustes, Início volta a Início; no jogo, Início abre a pausa em "Salvar e voltar à biblioteca". Instalado na Philco real (0.6.0, abriu sem erro).
+Executado: testes nativos de política, JUnit JVM 10/10, lint 0 erros, build x86 e ARMv7. No Android TV virtual: Menu do celular abre Ajustes, Início volta a Início; no jogo, Início abre a pausa em "Salvar e voltar à biblioteca". Instalado na TV de referência real (0.6.0, abriu sem erro).
 
 ## Pasta interna de jogos e Retornar do celular · 0.6.1-dev
-Na Philco, o seletor de pastas do Android (DocumentsUI) não mostra "Usar esta pasta" dentro de subpastas e bloqueia a raiz e Download; não havia como escolher uma pasta. O RetroTV agora também lê `files/Games`, a pasta privada do app (sem seletor nem permissão), ao voltar ao app e em "Atualizar biblioteca". Só jogos de cartucho; imagens de CD continuam pela pasta USB. Em build de depuração, jogos entram nela com `adb push` para `/data/local/tmp` e `run-as org.retrotv.lite cp`.
+Na TV de referência, o seletor de pastas do Android (DocumentsUI) não mostra "Usar esta pasta" dentro de subpastas e bloqueia a raiz e Download; não havia como escolher uma pasta. O RetroTV agora também lê `files/Games`, a pasta privada do app (sem seletor nem permissão), ao voltar ao app e em "Atualizar biblioteca". Só jogos de cartucho; imagens de CD continuam pela pasta USB. Em build de depuração, jogos entram nela com `adb push` para `/data/local/tmp` e `run-as org.retrotv.lite cp`.
 
 Celular: "Retornar" (bit 17 → botão MISC1 do controle virtual) volta um passo em qualquer tela; no jogo abre a pausa. Não fecha o RetroTV a partir do cabeçalho da home, para não derrubar a própria conexão.
 
-Executado: testes nativos de política, JUnit JVM 10/10, lint 0 erros, build x86 e ARMv7. No Android TV virtual: Thwaite apareceu e abriu pela pasta interna; Retornar abriu e fechou a pausa. Na Philco real (0.6.1): os 7 jogos homebrew aparecem na biblioteca e Concentration Room abriu e rodou.
+Executado: testes nativos de política, JUnit JVM 10/10, lint 0 erros, build x86 e ARMv7. No Android TV virtual: Thwaite apareceu e abriu pela pasta interna; Retornar abriu e fechou a pausa. Na TV de referência real (0.6.1): os 7 jogos homebrew aparecem na biblioteca e Concentration Room abriu e rodou.
 
 ## Jogador 1 do celular · 0.6.2-dev
-Na Philco, com o celular também conectado como controle remoto do Google TV, o serviço cria um dispositivo "virtual-remote" que se declara gamepad; ele virava jogador 1 e o celular (canal RetroTV) ficava como jogador 2, então os botões não agiam no jogo. Agora o controle do celular é sempre o jogador 1 e o "virtual-remote" só navega menus, sem ocupar vaga. Executado: testes nativos de política, JUnit JVM 10/10, lint 0 erros, builds; no emulador, o Start do celular avançou o Thwaite e Retornar voltou um passo. Instalado na Philco (0.6.2); teste com o moto g55 pendente.
+Na TV de referência, com o celular também conectado como controle remoto do Google TV, o serviço cria um dispositivo "virtual-remote" que se declara gamepad; ele virava jogador 1 e o celular (canal RetroTV) ficava como jogador 2, então os botões não agiam no jogo. Agora o controle do celular é sempre o jogador 1 e o "virtual-remote" só navega menus, sem ocupar vaga. Executado: testes nativos de política, JUnit JVM 10/10, lint 0 erros, builds; no emulador, o Start do celular avançou o Thwaite e Retornar voltou um passo. Instalado na TV de referência (0.6.2); teste com o moto g55 pendente.
 
 ## Setas seguradas e controle remoto como reserva · 0.6.3-dev
 Teclas do controle remoto (o da TV ou o do Google TV) passam a valer enquanto estão seguradas durante o jogo; antes cada toque virava um pulso de um quadro, então segurar andava só um passo. O "virtual-remote" do Google TV volta a ocupar uma vaga livre de jogador como reserva; o celular pelo canal RetroTV continua sempre como jogador 1.
 
-Executado: testes nativos de política, JUnit JVM 10/10, lint 0 erros, builds x86 e ARMv7. No Android TV virtual, na demo: toque rápido moveu 4 px e seta segurada (~0,5 s) moveu 52 px. Instalação na Philco pendente: a TV pediu nova autorização de ADB.
+Executado: testes nativos de política, JUnit JVM 10/10, lint 0 erros, builds x86 e ARMv7. No Android TV virtual, na demo: toque rápido moveu 4 px e seta segurada (~0,5 s) moveu 52 px. Instalação na TV de referência pendente: a TV pediu nova autorização de ADB.
 
 ## Controle pelo navegador (iPhone) · 0.7.0-dev
 A ponte do celular agora também serve, na porta 47801, uma página de controle que funciona em qualquer navegador (iPhone, iPad, Android), sem app. Ela fala o mesmo protocolo do RetroTV Pad por WebSocket, com o mesmo pareamento por código de 4 dígitos e token. Layouts NES, SNES, Mega, PS1, GB, Arcade e TV; AUTO, Início e Retornar; multitoque e escolha do botão mais próximo.
 
-Executado: JUnit JVM 14/14 (4 novos: chave de aceite da RFC 6455, frames mascarados e recusas, linhas sobre frames com ping/pong, cabeçalho HTTP limitado), lint 0 erros, builds x86 e ARMv7. No Android TV virtual, pelo navegador embutido: página servida (200; 404 e 405 nos demais casos), código pedido e aceito, AUTO trocando para NES, setas movendo o foco, Início voltando à home, A abrindo o Thwaite, START passando a tela de título e Retornar abrindo a pausa. Na Philco real (0.7.0): página respondendo pela rede local em `http://192.168.1.112:47801`. Teste no iPhone pendente.
+Executado: JUnit JVM 14/14 (4 novos: chave de aceite da RFC 6455, frames mascarados e recusas, linhas sobre frames com ping/pong, cabeçalho HTTP limitado), lint 0 erros, builds x86 e ARMv7. No Android TV virtual, pelo navegador embutido: página servida (200; 404 e 405 nos demais casos), código pedido e aceito, AUTO trocando para NES, setas movendo o foco, Início voltando à home, A abrindo o Thwaite, START passando a tela de título e Retornar abrindo a pausa. Na TV de referência real (0.7.0): página respondendo pela rede local em `http://192.168.1.112:47801`. Teste no iPhone pendente.
 
 ## Revisão de alinhamento da interface · 0.7.1-dev
 - **Pôster:**
@@ -151,16 +151,16 @@ Executado: JUnit JVM 14/14 (4 novos: chave de aceite da RFC 6455, frames mascara
 - **Minimal:** o nome do console e a contagem ficam centralizados na mesma caixa da arte.
 - **Rodapé:** o status mostra os jogos da pasta interna, em vez de "Escolha sua biblioteca USB".
 
-Executado: testes nativos de política, JUnit JVM 14/14, lint 0 erros, builds x86 e ARMv7, capturas antes e depois no Android TV virtual (Galeria e Minimal: home, biblioteca, detalhes, ajustes). Ainda não instalado na Philco.
+Executado: testes nativos de política, JUnit JVM 14/14, lint 0 erros, builds x86 e ARMv7, capturas antes e depois no Android TV virtual (Galeria e Minimal: home, biblioteca, detalhes, ajustes). Ainda não instalado na TV de referência.
 
 ## Capas dos jogos da pasta interna · 0.7.2-dev
 A pasta interna (`files/Games`) já procurava uma imagem com o mesmo nome do jogo (`Thwaite.nes` → `Thwaite.png`, também jpg/jpeg/webp até 12 MB), mas o carregador de capas só aceitava `content://` (USB pelo seletor), então essas capas nunca apareciam. Agora `CoverRepository` aceita `file://` apenas dentro de `files/Games` (caminho canônico, sem sair da pasta); qualquer outro `file://` continua recusado.
 
 Capas geradas a partir da tela de título de cada jogo, capturada no Android TV virtual: 480x640 (3:4), fundo com a própria tela desfocada e escurecida, tela nítida no centro e o nome do console no topo, como nos pôsteres sem capa. Ficam fora do projeto (`work/covers/capas`) e vão só para a pasta do app na TV. Sete jogos com capa; Break An Egg (Mega Drive) ficou sem, porque o núcleo picodrive compilado para x86 recusou a ROM no emulador.
 
-Executado: JUnit JVM 14/14, lint 0 erros, builds x86 e ARMv7. No Android TV virtual: capas na Biblioteca, em Continuar e na tela de detalhes. Na Philco: capas copiadas para `files/Games`; 0.7.2 instalado em seguida e capas conferidas na Biblioteca e em Continuar. Na Philco, o Break An Egg também é recusado: o picodrive pede caminho de arquivo (`need_fullpath`) e recebe a URI do jogo; correção pendente.
+Executado: JUnit JVM 14/14, lint 0 erros, builds x86 e ARMv7. No Android TV virtual: capas na Biblioteca, em Continuar e na tela de detalhes. Na TV de referência: capas copiadas para `files/Games`; 0.7.2 instalado em seguida e capas conferidas na Biblioteca e em Continuar. Na TV de referência, o Break An Egg também é recusado: o picodrive pede caminho de arquivo (`need_fullpath`) e recebe a URI do jogo; correção pendente.
 
 ## Mega Drive volta a abrir · 0.7.3-dev
 O picodrive declara `need_fullpath` (abre o arquivo por conta própria), mas o RetroTV passava a ele a URI do jogo (`file://…` ou `content://…`), que ele não consegue abrir: todo jogo de Mega Drive dava "Núcleo recusou jogo". Agora, para núcleos que pedem caminho, o `Host::open` grava os bytes já lidos em `cache/content/content.<ext>` (extensão original tirada da URI, com reserva por console: `md`, `sms`) e passa esse caminho. NES e SNES continuam recebendo a ROM em memória; PlayStation e Arcade continuam no caminho por streaming, sem cópia.
 
-Executado: testes nativos (host com QuickNES real + 3 casos de extensão, política), JUnit JVM 14/14, lint 0 erros, builds x86 e ARMv7. No Android TV virtual (picodrive x86 só para teste) e na Philco (0.7.3 instalada): Break An Egg abre até a tela de título. Com isso o Break An Egg ganhou capa, e os 8 jogos da pasta interna têm capa na Philco.
+Executado: testes nativos (host com QuickNES real + 3 casos de extensão, política), JUnit JVM 14/14, lint 0 erros, builds x86 e ARMv7. No Android TV virtual (picodrive x86 só para teste) e na TV de referência (0.7.3 instalada): Break An Egg abre até a tela de título. Com isso o Break An Egg ganhou capa, e os 8 jogos da pasta interna têm capa na TV de referência.

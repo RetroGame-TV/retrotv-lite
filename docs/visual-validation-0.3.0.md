@@ -1,6 +1,6 @@
 # Verificação da revisão 0.3.0-dev
 
-Executada em 24/10/2026. Android TV 11 x86 virtual, SDL/GLES2, 1280×720. APK de destino compilado para ARMv7; nenhuma instalação na Philco real foi realizada.
+Executada em 24/10/2026. Android TV 11 x86 virtual, SDL/GLES2, 1280×720. APK de destino compilado para ARMv7; nenhuma instalação na TV de referência real foi realizada.
 
 ## Mudanças verificadas
 
@@ -34,5 +34,5 @@ Capturas reais do renderer em outputs/evidence/design-0.3.0/. Seis cartazes geom
 
 O APK pessoal reúne QuickNES, Snes9x2005, PicoDrive, FBNeo CPS12 e PCSX ReARMed. Só o NES foi executado; a presença dos demais binários não comprova seus jogos, BIOS ou desempenho. Esta variante tem licenças não comerciais/mistas e não é autorização de publicação/venda. Fontes e avisos acompanham a entrega.
 
-Pendências: Philco/Mali-470, USB OEM físico, gamepads reais, jogos dos demais consoles, memória/FPS e distância de leitura. Game Boy não tem núcleo empacotado, N64 permanece desabilitado, Wii fora de escopo. Perfis de núcleo, frameskip e remapeamento por console ainda não foram implementados. A versão continua de desenvolvimento.
+Pendências: TV de referência/Mali-470, USB OEM físico, gamepads reais, jogos dos demais consoles, memória/FPS e distância de leitura. Game Boy não tem núcleo empacotado, N64 permanece desabilitado, Wii fora de escopo. Perfis de núcleo, frameskip e remapeamento por console ainda não foram implementados. A versão continua de desenvolvimento.
 Acabamento final: adicionada margem ao atlas de formas para impedir linhas causadas pela interpolação entre regiões. Tema Minimal novamente capturado e inspecionado; builds x86 e ARMv7 debug/release repetidos com sucesso (refine-atlas-*.log). O release gerado permanece sem assinatura de distribuição e não é o APK indicado para instalar.

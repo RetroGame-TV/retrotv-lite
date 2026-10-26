@@ -26,7 +26,7 @@ Atlas de fonte Android regular/negrito: 1024×1792 RGBA (~7 MiB), glifos-base de
 
 Capturas da revisão são produzidas pelo renderer do APK em Android TV 11 x86 virtual. Para mostrar uma biblioteca preenchida, um teste opcional protegido por argumento `preview=1` cria seis cartazes geométricos originais associados ao mesmo homebrew de controle CC0. O rodapé identifica esse acervo como demonstração. O teste recusa catálogos com jogos preexistentes. Esses cartazes não são ROMs comerciais e o catálogo de preview não acompanha o APK instalado normalmente.
 
-Legibilidade a distância, fluidez e consumo na Philco real ainda precisam de validação física.
+Legibilidade a distância, fluidez e consumo na TV de referência real ainda precisam de validação física.
 
 ## Refinamento 0.3
 

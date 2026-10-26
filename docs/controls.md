@@ -8,6 +8,6 @@ Configurações > Controles permite selecionar comando com D-pad, OK e pressiona
 
 Desconexão pausa a sessão e limpa entradas. Voltar/OK recupera o menu. Sem gamepad, emulação aceita D-pad e OK/A limitados; teclado de desenvolvimento: X/A, Z/B, Espaço/START, Tab/SELECT, Esc/menu.
 
-Pendente: dois gamepads Bluetooth reais na Philco, layouts Android não padronizados, latência e reatribuição por dispositivo específico.
+Pendente: dois gamepads Bluetooth reais na TV de referência, layouts Android não padronizados, latência e reatribuição por dispositivo específico.
 
 Detalhes: esquerda/direita escolhe Jogar ou Continuar (somente se houver snapshot); baixo percorre favoritos, imagem/áudio e retorno. Em Imagem e áudio, cima/baixo escolhe a linha e OK alterna o valor. A primeira linha alterna escopo jogo/console. Voltar retorna ao detalhe ou à pausa de origem.

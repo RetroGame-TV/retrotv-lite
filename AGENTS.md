@@ -1,7 +1,7 @@
 # Instruções para Codex — RetroTV Lite
 
 ## Missão
-Implemente integralmente o plano `RETROTV_LITE_PLANO_CODEX.md` por marcos pequenos, com código real, testes e documentação. A aplicação deve ser original e inspirada na experiência UX do Pegasus, sem copiar seu código ou assets. Principal alvo: Philco PTV40G71AGBL, Android TV 11, `armeabi-v7a`, Mali-470 / GLES2, ~1 GB de RAM.
+Implemente integralmente o plano `RETROTV_LITE_PLANO_CODEX.md` por marcos pequenos, com código real, testes e documentação. A aplicação deve ser original e inspirada na experiência UX do Pegasus, sem copiar seu código ou assets. Principal alvo: TV de referência (perfil Lite), Android TV 11, `armeabi-v7a`, Mali-470 / GLES2, ~1 GB de RAM.
 
 ## Regras obrigatórias
 1. Leia primeiro o plano completo. Crie `docs/progress.md` e atualize em cada marco.
@@ -25,4 +25,4 @@ Implemente integralmente o plano `RETROTV_LITE_PLANO_CODEX.md` por marcos pequen
 - Riscos e próximo marco
 
 ## Conduta ante bloqueios
-Se SDK/NDK, binários de core, compatibilidade de libretro ou Philco real não estiverem disponíveis: complete a parte independente, use mocks apenas onde apropriado, documente uma reprodução clara e não falsifique sucesso. Continue nas tarefas que não dependem desse bloqueio.
+Se SDK/NDK, binários de core, compatibilidade de libretro ou TV de referência real não estiverem disponíveis: complete a parte independente, use mocks apenas onde apropriado, documente uma reprodução clara e não falsifique sucesso. Continue nas tarefas que não dependem desse bloqueio.

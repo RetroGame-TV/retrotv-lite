@@ -1,6 +1,6 @@
 # Verificação da revisão visual 0.2.0-dev
 
-Executada em 23/10/2026. Android TV 11 x86, viewport 1280×720, SDL/OpenGL ES 2 via emulador. Nenhuma instalação ou medição na Philco real foi realizada.
+Executada em 23/10/2026. Android TV 11 x86, viewport 1280×720, SDL/OpenGL ES 2 via emulador. Nenhuma instalação ou medição na TV de referência real foi realizada.
 
 | Verificação | Resultado |
 |---|---|

@@ -30,6 +30,6 @@ Servidor pertence ao lifecycle da Activity e fecha sockets em onStop/onDestroy. 
 Código original da ponte e protocolo sob MIT; não muda o licenciamento do frontend/núcleos. Skins e transporte do celular estão no projeto separado AGPLv3.
 
 Verificado (0.5.1): 10 testes JVM, 5 testes Android, lint, build x86/ARMv7 e ponta a ponta por Wi-Fi entre dois emuladores (código, recusa, token, conexão parada estável, toques rápidos movendo o foco).
-Pendente: RFCOMM entre aparelhos físicos, latência e reconexão na Philco, Wi-Fi em rede real com isolamento de clientes.
+Pendente: RFCOMM entre aparelhos físicos, latência e reconexão na TV de referência, Wi-Fi em rede real com isolamento de clientes.
 
 Controle pelo navegador (0.7.0): com "Controle pelo celular" ativo, o RetroTV também atende em `http://<IP da TV>:47801` (o endereço aparece ao ativar a opção). A página (`app/src/main/assets/web/pad.html`, um arquivo só, sem recursos externos) tem os layouts NES, SNES, Mega, PS1, GB, Arcade e TV, AUTO, Início e Retornar. Conversa por WebSocket em `/ws` com as mesmas linhas do canal TCP (`H`/`C`/`P`/`T`/`OK`, `I`, `K`) e o mesmo pareamento por código e token; o token fica no armazenamento do navegador. Implementação mínima de WebSocket (RFC 6455) em `WebPad.kt`: só frames de texto mascarados, sem fragmentação, até 1 KiB; ping respondido; cabeçalho HTTP limitado a 8 KiB; só GET. No iPhone: abrir o endereço no Safari e usar "Adicionar à Tela de Início" para abrir em tela cheia.

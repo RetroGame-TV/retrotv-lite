@@ -4,7 +4,7 @@ Versões exatas: cores/registry.json e gitlinks. Nenhuma ROM/BIOS comercial dist
 
 | Sistema | Core | ARMv7 | Execução comprovada | Política/pendência |
 |---|---|---|---|---|
-| NES | QuickNES 26bb785 | Compilado no APK | Demo original no host Windows e em Android TV virtual x86 | Philco, 10 min e Bluetooth físicos pendentes |
+| NES | QuickNES 26bb785 | Compilado no APK | Demo original no host Windows e em Android TV virtual x86 | TV de referência, 10 min e Bluetooth físicos pendentes |
 | SNES | Snes9x2005 a79dfe9 | Compilado | Não testado com jogo SNES | Build privado separado; licença mista/não comercial |
 | Mega Drive / Master System | PicoDrive 1890c29 | Compilado | Não testado com jogo Mega Drive | Build privado separado; não comercial |
 | CPS1/CPS2 | FBNeo 2b0c1c0, subset cps12 | Compilado | Não testado | ROM-set específico; licença customizada, build privado |

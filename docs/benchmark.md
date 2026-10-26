@@ -1,6 +1,6 @@
 # Protocolo de benchmark
 
-Pendente: Philco física não conectada. Nenhum número de FPS/PSS medido na TV.
+Pendente: TV de referência física não conectada. Nenhum número de FPS/PSS medido na TV.
 
 Experimento opcional Pegasus: obter APK Android 32-bit apenas do site oficial https://pegasus-frontend.org/, instalar separadamente sem alterar o launcher, usar tema básico e mesmos arquivos legais. Registrar versão/tema, cold start, PSS e D-pad. Não depende dele para executar RetroTV; nenhum código/asset Pegasus incorporado.
 

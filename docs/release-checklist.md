@@ -9,7 +9,7 @@
 - [x] Lint passou com exceções específicas SDL documentadas, APK auditado ELF32 ARM e assinatura debug verificada.
 - [x] Dois testes Android no emulador (SAF sintético, remoção/retorno, migração e URI longa) passaram.
 - [ ] Execução do workflow no GitHub (arquivo local não equivale a CI verde).
-- [ ] Validação física completa na Philco.
+- [ ] Validação física completa na TV de referência.
 - [ ] Jogos legais e saves comprovados em cada core adicional.
 - [ ] Gate de distribuição dos cores de licença não comercial/mista.
 - [ ] Editor avançado de perfis por jogo, feedback de USB removido durante core que contorne VFS e auditoria prolongada de memória.

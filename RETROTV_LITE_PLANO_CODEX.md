@@ -3,12 +3,12 @@
 **Versão:** 2.0 — 23/10/2026  
 **Status:** planejamento; nenhum APK funcional ou teste físico foi demonstrado neste documento.  
 **Produto:** RetroTV Lite, aplicativo Android TV com experiência de console retrô e interface original inspirada na organização do Pegasus Frontend.  
-**Dispositivo de referência:** Philco PTV40G71AGBL com Android TV 11.  
+**Dispositivo de referência:** TV de referência (perfil Lite) com Android TV 11.  
 **Objetivo de entrega:** código-fonte reproduzível, documentação, testes e APK ARM32 quando o SDK/NDK estiver disponível. Não declarar compatibilidade física antes de instalar e executar na TV.
 
 ## 0. Instruções fundamentais para o Codex
 
-Este documento é a fonte de verdade. O arquivo `AGENTS.md` define as regras de execução do agente. Ler ambos antes de editar. **Implementar o projeto inteiro por fases e manter progresso rastreável**, sem parar apenas para solicitar permissão para avançar. No entanto, nunca afirmar que uma fase está validada na Philco sem evidência do dispositivo real. Quando o ambiente não permitir compilar, executar ou conectar a TV, concluir as partes independentes, criar os testes/scripts correspondentes, documentar o bloqueio e continuar com as demais tarefas possíveis.
+Este documento é a fonte de verdade. O arquivo `AGENTS.md` define as regras de execução do agente. Ler ambos antes de editar. **Implementar o projeto inteiro por fases e manter progresso rastreável**, sem parar apenas para solicitar permissão para avançar. No entanto, nunca afirmar que uma fase está validada na TV de referência sem evidência do dispositivo real. Quando o ambiente não permitir compilar, executar ou conectar a TV, concluir as partes independentes, criar os testes/scripts correspondentes, documentar o bloqueio e continuar com as demais tarefas possíveis.
 
 Não tentar realizar tudo em um único commit. Trabalhar em mudanças pequenas, com compilação e testes após cada mudança, e registrar o resultado real. Ao final, entregar um estado honesto das funcionalidades: `implementada + validada`, `implementada + não validada em hardware`, `experimental` ou `bloqueada`.
 
@@ -72,7 +72,7 @@ Os dados foram relatados/obtidos em capturas do AIDA64 nas interações do propr
 
 | Recurso | Valor observado / a confirmar em runtime |
 |---|---|
-| Fabricante / modelo | Philco PTV40G71AGBL |
+| Fabricante / modelo | TV de referência (perfil Lite) |
 | SO | Android TV 11 |
 | SoC/plataforma | MStar/MediaTek `m5621`, conforme identificação anterior |
 | CPU | 4 × ARM Cortex-A53 até ~1,3 GHz |
@@ -127,7 +127,7 @@ retro-tv-lite/
 │   ├── usb-storage.md
 │   ├── benchmark.md
 │   ├── licenses.md
-│   └── test-on-philco.md
+│   └── test-on-tv.md
 ├── scripts/ build, adb-install, log, benchmark
 └── .github/workflows/ build-and-test.yml
 ```
@@ -262,7 +262,7 @@ O Codex deve executar todas as fases **na ordem**, mas pode construir testes/moc
 
 ### F1 — Prova do Pegasus e núcleo de UI (P0)
 
-- Criar roteiro opcional para medir Pegasus oficial Android 32 bits na Philco como baseline separado, não como dependência de runtime.
+- Criar roteiro opcional para medir Pegasus oficial Android 32 bits na TV de referência como baseline separado, não como dependência de runtime.
 - Implementar layout, componentes e tokens originais; Home/Recentes/Favoritos/Sistemas/Detalhes/Configurações; dados mockados criados no projeto, sem capas comerciais.
 - Suporte a D-pad e gamepads, restauração de foco, estados vazios e modo minimalista.
 - Adicionar testes de navegação/estado.
@@ -319,7 +319,7 @@ O Codex deve executar todas as fases **na ordem**, mas pode construir testes/moc
 
 ## 8. Qualidade, testes e definição de pronto
 
-### 8.1 Matriz de validação na Philco (manual)
+### 8.1 Matriz de validação na TV de referência (manual)
 
 - [ ] Instalar APK ARMv7 com ADB, abrir pela Android TV com o controle original.
 - [ ] Percorrer todo o menu só com D-pad/OK/Voltar, sem pointer/mouse.
@@ -368,7 +368,7 @@ O Codex deve executar todas as fases **na ordem**, mas pode construir testes/moc
 
 Ao começar: inspecionar repositório e ferramentas disponíveis. Criar `docs/progress.md` e checklist de milestones. Priorizar código de verdade (sem simular `build passed`, screenshots falsos, benchmarks inventados ou declarar APK sem arquivo).
 
-No fim de cada fase: atualizar estado, rodar build/testes reais, anotar comandos, logs e caminhos dos artefatos. Se o hardware físico não estiver disponível, **seguir para o próximo trabalho independente**, mas manter marcados todos os critérios que exigem Philco real; nunca marcar a fase como validada no dispositivo.
+No fim de cada fase: atualizar estado, rodar build/testes reais, anotar comandos, logs e caminhos dos artefatos. Se o hardware físico não estiver disponível, **seguir para o próximo trabalho independente**, mas manter marcados todos os critérios que exigem TV de referência real; nunca marcar a fase como validada no dispositivo.
 
 As decisões que faltarem (ex.: versão do NDK, formato exato de tema, core da primeira plataforma) devem ser resolvidas com pesquisa das APIs oficiais e justificadas em `docs/architecture.md`, favorecendo simplicidade, suporte ARMv7/GLES2 e menor memória. Não interromper com perguntas triviais ou depender de imagens geradas. Caso uma incompatibilidade estrutural impossibilite determinada funcionalidade, registrar o bloqueio e oferecer uma implementação degradada explícita em vez de quebrar o aplicativo.
 

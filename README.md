@@ -1,10 +1,23 @@
 # RetroTV Lite
 
-App Android TV nativo C++17/SDL2/GLES2 + Kotlin/SAF, destinado à Philco PTV40G71AGBL (Android 11, **ARMv7 de 32 bits**). Interface original, offline e navegável por controle remoto. Versão de desenvolvimento **0.4.0-dev**; não é release 1.0 certificada.
+Frontend de jogos retrô para **Android TV de entrada**, em C++17/SDL2/GLES2 + Kotlin. Interface própria, offline e feita para o controle remoto. Versão de desenvolvimento **0.7.3-dev**; não é uma release 1.0 certificada.
 
-Inclui biblioteca SQLite, pastas SAF, favoritos/recentes, Galeria com capas locais/Minimal monocromático, modo performance, host Libretro (frontend próprio, sem incorporar a interface do RetroArch), perfis persistentes de proporção/filtro/volume, menu rápido, SRAM, save states/Quick Resume condicionais, backup/restore validado e controles com dois slots/remapeamento. Demo NES original CC0 permite testar o fluxo sem obter ROM comercial. Para usar capas: `Nome do jogo.png` (ou jpg/jpeg/webp) ao lado da ROM com o mesmo nome base; atualizar biblioteca após mudanças. Veja [especificação visual](docs/ui-spec.md).
+**Por que "Lite":** o app foi pensado para o hardware das TVs mais simples, e não para celulares ou TV boxes potentes. Os limites abaixo valem para todas as decisões de interface e de emulação:
 
-**Validação e limitações:** leia [docs/progress.md](docs/progress.md) e [matriz dos cores](docs/core-compatibility.md). O APK ARMv7 compila; demo NES foi executada no Windows e Android TV virtual **x86**. Não houve instalação na Philco, teste de Bluetooth/USB físico nem execução de jogos SNES/Mega Drive/Arcade/PS1. N64 está desabilitado; Wii está fora do escopo. Perfis de imagem/áudio por jogo e console estão disponíveis. Scraper, perfis de usuário e editor de núcleo/frameskip/remapeamento por console continuam pendentes.
+| Recurso | Perfil Lite (alvo) |
+|---|---|
+| Sistema | Android TV 8.0+ (testado em Android TV 11) |
+| CPU | ARMv7 de **32 bits** (`armeabi-v7a`), 4 núcleos da classe Cortex-A53/A7 |
+| Memória | cerca de **1 GiB** de RAM, dividido com o sistema da TV |
+| GPU | **OpenGL ES 2.0** (classe Mali-400/450/470); sem Vulkan nem GLES 3 |
+| Consoles | NES, SNES, Mega Drive/Master System, Arcade CPS1/CPS2 e PS1. N64, GameCube e Wii ficam fora: exigem GLES 3, 64 bits ou mais memória |
+
+Inclui biblioteca SQLite, pastas de jogos (USB pelo seletor do Android ou pasta interna do app), favoritos/recentes, aparência Galeria (com capas locais) ou Minimal, modo leve, host Libretro próprio (sem a interface do RetroArch), perfis de imagem/áudio por jogo e por console, menu rápido, SRAM, save states/Quick Resume condicionais, backup/restore validado e controles com remapeamento. Também tem controle pelo celular ([RetroTV Pad](https://github.com/RetroGame-TV/retrotv-pad)) ou pelo navegador. A demo NES original CC0 permite testar sem nenhuma ROM. Para capas: `Nome do jogo.png` (ou jpg/jpeg/webp) ao lado da ROM, com o mesmo nome base. Veja a [especificação visual](docs/ui-spec.md).
+
+**Validação e limitações:** leia [docs/progress.md](docs/progress.md) e a [matriz dos cores](docs/core-compatibility.md).
+- **Testado** no Android TV virtual x86 e numa TV de referência real com o perfil acima: NES, SNES e Mega Drive rodando, e controle pelo celular por Wi-Fi.
+- **Ainda sem medição:** desempenho (FPS/memória), Arcade e PS1 em aparelho real, e Bluetooth RFCOMM entre aparelhos.
+- Scraper, perfis de usuário e editor de frameskip por console continuam pendentes.
 
 ## Como é
 
@@ -53,7 +66,7 @@ Habilite depuração Android TV e conecte ADB pelo método suportado pela TV. Co
 
 Abra RetroTV Lite pelo launcher. Use D-pad/OK/Voltar; Menu abre configurações. Primeiro teste: **Ajustes > Testar controle**. Depois escolha a subpasta USB contendo seu acervo legal. Para PS1, importe sua BIOS; formatos e VFS ainda dependem de validação. Nunca inclua jogos/BIOS sem direitos de uso.
 
-Antes de usar progresso importante, teste save convencional, snapshot, exportação e restauração com arquivos descartáveis. [Manual de saves](docs/saves.md), [controles](docs/controls.md), [USB](docs/usb-storage.md), [testar na Philco](docs/test-on-philco.md) e [troubleshooting](docs/troubleshooting.md).
+Antes de usar progresso importante, teste save convencional, snapshot, exportação e restauração com arquivos descartáveis. [Manual de saves](docs/saves.md), [controles](docs/controls.md), [USB](docs/usb-storage.md), [testar na TV de referência](docs/test-on-tv.md) e [troubleshooting](docs/troubleshooting.md).
 
 ## Testes
 
