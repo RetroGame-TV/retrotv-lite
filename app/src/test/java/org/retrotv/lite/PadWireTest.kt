@@ -13,10 +13,10 @@ class PadWireTest {
     @Test fun quickTapSurvivesABurstAndLatestStateStays(){
         val q=PhoneInputQueue()
         assertEquals("",q.poll())
-        q.push("1 0 0 0 0 0");q.push("0 0 0 0 0 0")
+        q.push(PhoneState(buttons=1));q.push(PhoneState())
         assertEquals("1 0 0 0 0 0",q.poll());assertEquals("0 0 0 0 0 0",q.poll());assertEquals("0 0 0 0 0 0",q.poll())
-        for(i in 1..6)q.push("$i 0 0 0 0 0")
-        assertEquals("3 0 0 0 0 0",q.poll())
+        for(i in 1..6)q.push(PhoneState(buttons=i))
+        assertEquals("1 0 0 0 0 0",q.poll())
         q.reset();assertEquals("off",q.poll());assertEquals("",q.poll())
     }
     @Test fun phoneIdsAreBoundedTokens(){
