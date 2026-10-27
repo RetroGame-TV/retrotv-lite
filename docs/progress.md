@@ -1,5 +1,13 @@
 # Progresso real
 
+## SNES com menor atraso e snapshots preservados · 0.7.4-dev · 27/10/2026
+
+- Build privado de Snes9x 2005 com LAGFIX em arquivo separado, mantendo o `.so` anterior. Wrapper Android próprio sobre a revisão fixada, sem modificar o submódulo. Novas partidas usam a variante rápida; continuar/carregar seleciona o binário exato do snapshot. SRAM mantém sua identidade e validação. Cópias permanentes `.before-snes-lagfix` ficam separadas dos `.prev`.
+- Android x86: 120 comparações determinísticas na cópia de Street Fighter II do usuário, com 12 entradas e cinco repetições por núcleo. Direções/diagonais passaram de 3 para 2 quadros; seis golpes de 4 para 3. Ganho interno de um quadro (~16,69 ms nominais), sem medição física de toque/Bluetooth.
+- Atualização da TV virtual 0.7.3 → 0.7.4 por `install -r`: quatro arquivos de save preservados byte a byte por SHA-256. Retomada antiga abriu no núcleo legado; Jogar agora abriu no novo e criou cópia permanente idêntica. Carregar antigo pelo menu trocou para o legado; novo estado salvo no menu do app reabriu no novo. Bibliotecas conferidas em `/proc/PID/maps`; partida, direções, diagonal e golpes exercitados via TCP real do controle.
+- Cinco CTests passaram, incluindo nova suíte de seleção, SRAM, backup imutável após oito gravações e recusa de estados estranhos/corrompidos. Build/teste JVM 22 verdes; oito testes Android de entrada/metadados/armazenamento passaram novamente. Builds ARMv7 e x86 passaram; lint zero erros/51 avisos anteriores. APK pessoal versionCode 17, mesma assinatura e cinco núcleos anteriores preservados; acrescenta somente a variante SNES.
+- Limite: snapshot antigo continua com o atraso do núcleo anterior; iniciar normalmente habilita a redução. Não há conversão forçada, reset de saves ou limpeza de dados. Não houve execução ARMv7 nem Bluetooth na TV física. Detalhes e reprodução em [SNES e saves](snes-latency.md).
+
 ## Atualização de entrada · 27/10/2026
 
 - Implementado e testado: esperar o próximo quadro antes de consultar o telefone/processar SDL/coletar botões e eixos. Menu e primeiro quadro ao lançar/retomar mantêm seu comportamento.

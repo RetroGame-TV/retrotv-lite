@@ -125,7 +125,7 @@ int main(int, char**) {
                 if(a!=Action::Ok)return;
                 bool ok=true;
                 if(pendingAction==1)ok=session.save(true);
-                if(pendingAction==2)ok=session.load();
+                if(pendingAction==2)ok=session.load(platform);
                 if(pendingAction==3)session.host.reset();
                 if(pendingAction==7){session.finish(platform);model.selectTab(model.lastContentTab);loadCatalog();model.screen=Screen::Library;return;}
                 model.screen=ok?Screen::QuickMenu:Screen::Error;model.message=session.error;return;

@@ -53,6 +53,20 @@ public:
     SaveStore(std::string dir,std::string game,std::string core):directory(std::move(dir)),gameIdentity(std::move(game)),coreIdentity(std::move(core)){}
     std::string path(bool state) const {return directory+(state?"/resume.state":"/progress.sram");}
     bool exists(bool state) const {return std::filesystem::exists(path(state));}
+    // Discover identity only after validating the snapshot, game, size and CRC.
+    // This does not authorize a different core to load it.
+    std::string stateCore() const {
+        auto b=readBounded(path(true));if(b.empty())return {};
+        if(b.size()<20)throw std::runtime_error("Save inválido: arquivo preservado");
+        auto meta=get(b,8);
+        if(meta>4096||b.size()<20ull+meta)throw std::runtime_error("Metadados do save inválidos");
+        std::string text(b.begin()+20,b.begin()+20+meta);
+        auto first=text.find('\n'),last=text.rfind('\n');
+        if(first==std::string::npos||first==last)throw std::runtime_error("Metadados do save inválidos");
+        auto core=text.substr(first+1,last-first-1);
+        SaveStore(directory,gameIdentity,core).read(true);
+        return core;
+    }
     void write(bool state,const std::vector<uint8_t>& payload){
         if(payload.empty())return;if(payload.size()>32*1024*1024)throw std::runtime_error("Save grande demais");
         const std::string metadata=gameIdentity+"\n"+(state?coreIdentity:family(coreIdentity))+"\n"+(state?"state":"sram");

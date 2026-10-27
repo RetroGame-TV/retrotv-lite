@@ -1,6 +1,7 @@
 #pragma once
 #include "host.hpp"
 #include "save_store.hpp"
+#include "snes_core.hpp"
 #include "vfs.hpp"
 #include "../platform.hpp"
 #include "../ui/model.hpp"
@@ -20,6 +21,7 @@ class Session {
     std::unique_ptr<Vfs> vfs;
     uint32_t started=0,lastFlush=0;
     uint64_t playedMs=0;uint32_t lastActive=0;
+    std::string activeCorePath;
     std::vector<double> times;
     std::vector<double> frameTimes;uint64_t lastPresented=0;
 public:
@@ -41,7 +43,7 @@ public:
         try {
             const bool disc=game.system=="PlayStation";
             const bool streamed=disc||game.system=="Arcade";
-            const auto corePath=platform.call("path","native")+"/lib"+game.core+"_libretro.so";
+            auto corePath=platform.call("path","native")+"/lib"+game.core+"_libretro.so";
             if(!std::filesystem::exists(corePath))throw std::runtime_error("Núcleo não empacotado: "+game.core+". Consulte a matriz de compatibilidade.");
             const auto answer=platform.call("request","open\t"+game.uri);
             if(answer.rfind("ERR",0)==0||answer.empty())throw std::runtime_error(answer);
@@ -52,6 +54,8 @@ public:
             close(fd);
             const auto identity=game.id+":"+std::to_string(crc32(content.data(),content.size()))+":"+std::to_string(content.size())+":"+discStamp;
             const auto saveDir=platform.call("path","saves")+"/"+game.id;std::filesystem::create_directories(saveDir);
+            if(game.core=="snes9x2005")corePath=selectSnesCore(corePath,platform.call("path","native")+"/libsnes9x2005_lowlatency_libretro.so",SaveStore(saveDir,identity,""),resume);
+            activeCorePath=corePath;
             host.video=[this](const void* data,unsigned w,unsigned h,size_t pitch,retro_pixel_format pf){
                 auto target=pf==RETRO_PIXEL_FORMAT_XRGB8888?SDL_PIXELFORMAT_XRGB8888:SDL_PIXELFORMAT_RGB565;
                 if(!frame||width!=int(w)||height!=int(h)||format!=target){if(frame)SDL_DestroyTexture(frame);frame=SDL_CreateTexture(renderer,target,SDL_TEXTUREACCESS_STREAMING,w,h);width=int(w);height=int(h);format=target;SDL_SetTextureScaleMode(frame,playback.filter=="linear"?SDL_ScaleModeLinear:SDL_ScaleModeNearest);}
@@ -71,6 +75,7 @@ public:
             if(!host.open(corePath,contentPath,std::move(content),biosDir,saveDir,staging))throw std::runtime_error(host.error);
             saves=std::make_unique<SaveStore>(saveDir,identity,host.coreIdentity+":"+std::to_string(fileCrc(corePath)));
             auto sram=saves->read(false);if(!sram.empty()&&!host.setSram(sram))throw std::runtime_error("SRAM incompatível; original preservado");
+            if(game.core=="snes9x2005"&&corePath.find("_lowlatency_")!=std::string::npos)preserveSnesSaves(*saves);
             if(resume){auto state=saves->read(true);if(state.empty()||!host.unserialize(state))throw std::runtime_error("Quick Resume indisponível/incompatível. Use iniciar normalmente.");if(!sram.empty())host.setSram(sram);}
             SDL_AudioSpec wanted{},obtained{};wanted.freq=int(host.av.timing.sample_rate);wanted.format=AUDIO_S16SYS;wanted.channels=2;wanted.samples=1024;
             device=SDL_OpenAudioDevice(nullptr,0,&wanted,&obtained,SDL_AUDIO_ALLOW_FREQUENCY_CHANGE);
@@ -87,7 +92,17 @@ public:
     void pause(){if(host.state==SessionState::Running)playedMs+=SDL_GetTicks()-lastActive;host.pause();if(device){SDL_PauseAudioDevice(device,1);SDL_ClearQueuedAudio(device);}}
     void resume(){lastActive=SDL_GetTicks();lastPresented=0;host.resume();if(device)SDL_PauseAudioDevice(device,0);}
     bool save(bool snapshot){try{if(!saves)return false;auto ram=host.sram();if(!ram.empty())saves->write(false,ram);if(snapshot){auto state=host.serialize();if(state.empty())throw std::runtime_error("Núcleo não suporta save state");saves->write(true,state);}return true;}catch(const std::exception& e){error=e.what();return false;}}
-    bool load(){try{if(!saves)return false;auto current=host.sram();if(!current.empty())saves->write(false,current);auto state=saves->read(true);if(!host.unserialize(state))throw std::runtime_error("Estado recusado pelo núcleo");if(!current.empty())host.setSram(current);return true;}catch(const std::exception& e){error=e.what();return false;}}
+    bool load(Platform& platform){try{if(!saves)return false;
+        if(game.core=="snes9x2005"){
+            auto root=platform.call("path","native");auto selected=selectSnesCore(root+"/libsnes9x2005_libretro.so",root+"/libsnes9x2005_lowlatency_libretro.so",*saves,true);
+            if(selected!=activeCorePath){
+                // Preserve current battery saves before reopening the exact snapshot core.
+                if(!save(false))return false;auto played=playedMs;auto selectedGame=game;
+                if(!launch(selectedGame,platform,true))return false;pause();playedMs=played;return true;
+            }
+        }
+        auto current=host.sram();auto state=saves->read(true);if(!current.empty())saves->write(false,current);if(!host.unserialize(state))throw std::runtime_error("Estado recusado pelo núcleo");if(!current.empty())host.setSram(current);return true;
+    }catch(const std::exception& e){error=e.what();return false;}}
     void finish(Platform& p){if(!active())return;pause();save(true);p.call("request","record\t"+game.id+"\t"+std::to_string(playedMs/1000));release();}
     void tick(){auto start=SDL_GetPerformanceCounter();host.run();++frames;if(vfs&&vfs->ioFailed){pause();error="Erro de leitura/seek USB. Reconecte e reabra o jogo.\nSRAM e biblioteca permanecem preservados.";}if(device&&SDL_GetQueuedAudioSize(device)==0)++underruns;times.push_back(1000.0*double(SDL_GetPerformanceCounter()-start)/SDL_GetPerformanceFrequency());if(times.size()>600)times.erase(times.begin());if(SDL_GetTicks()-lastFlush>10000){save(false);lastFlush=SDL_GetTicks();}}
     void draw(){SDL_SetRenderDrawColor(renderer,0,0,0,255);SDL_RenderClear(renderer);if(frame){auto box=videoBounds(playback.aspect,width,height);SDL_Rect dst{box.x,box.y,box.w,box.h};SDL_RenderCopy(renderer,frame,nullptr,&dst);}}
