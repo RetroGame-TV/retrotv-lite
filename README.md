@@ -79,4 +79,6 @@ ctest --test-dir build/native --output-on-failure
 
 São testes reais de QuickNES e políticas de navegação/saves/VFS. Testes Android adicionais usam provider sintético apenas no debug. Variante exclusiva para emulador: `-PtestAbi=x86` (saídas em `app/build-emulator/`; não entregar para a TV ARM).
 
+A entrada do jogo é coletada depois da espera do quadro; o canal do celular mantém os analógicos mais recentes e preserva os toques curtos e as sequências digitais. A validação inclui SDL/QuickNES reais e receptor TCP no Android TV virtual. Veja [entrada, testes de botões e limites](docs/input-latency.md).
+
 Controle Bluetooth pelo celular e troca automática de layout: veja docs/phone-controller.md. Exige RetroTV Pad no celular; a sincronização é opcional e desligada por padrão.
