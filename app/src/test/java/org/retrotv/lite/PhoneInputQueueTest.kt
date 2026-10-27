@@ -7,8 +7,16 @@ class PhoneInputQueueTest{
     @Test fun motionFloodUsesNewestAxesWithoutDelayingButtons(){
         val q=PhoneInputQueue()
         repeat(10000){assertTrue(q.push(PhoneState(lx=it%128)))}
+        assertEquals("0 0 15 0 0 0",q.poll()) // Initial attachment snapshot, already using the newest axes.
         assertTrue(q.push(PhoneState(buttons=1,lx=90)));assertTrue(q.push(PhoneState(lx=127)))
         assertEquals("1 0 127 0 0 0",q.poll());assertEquals("0 0 127 0 0 0",q.poll())
+    }
+    @Test fun initialNeutralCannotBeOvertakenByAFirstQuickTap(){
+        val q=PhoneInputQueue();assertTrue(q.push(PhoneState()))
+        repeat(1000){assertTrue(q.push(PhoneState(lx=it%128)))}
+        assertTrue(q.push(PhoneState(buttons=1)));assertTrue(q.push(PhoneState()))
+        assertEquals("0 0 0 0 0 0",q.poll())
+        assertEquals("1 0 0 0 0 0",q.poll());assertEquals("0 0 0 0 0 0",q.poll())
     }
     @Test fun everyRapidTapAndDigitalDirectionSurvivesMotionBursts(){
         val q=PhoneInputQueue();val expected=mutableListOf<PhoneState>()

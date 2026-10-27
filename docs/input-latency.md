@@ -12,6 +12,8 @@ O mapeamento existente foi extraído para `native/input/frame_input.hpp`, usado 
 - **Botões/direcional:** cada mudança completa do estado digital em FIFO, uma por consulta de quadro. Pressionar e soltar entre quadros ocupa duas posições; o toque curto não desaparece. Diagonais, combinações, Start/Select, Home e Voltar permanecem representados.
 - **Repetições:** pacotes com o mesmo estado digital não ocupam posições novas. Uma direção segurada continua ativa após a fila esvaziar.
 
+O primeiro snapshot da conexão é preservado, mesmo quando neutro, para o SDL abrir o controle virtual antes do primeiro evento de botão. Isso vale apenas para a inicialização; os movimentos seguintes são consolidados. Um teste cobre explicitamente neutro inicial → rajada de movimentos → primeiro toque rápido, sem ultrapassar o snapshot de conexão.
+
 Os eixos de cada quadro são os mais recentes; não se promete reproduzir a posição histórica do analógico associada a uma transição digital anterior da mesma rajada. Sequências genuínas de botões/direcional podem precisar de mais de um quadro para serem consumidas: isso preserva os comandos e não deve ser apresentado como latência zero.
 
 A fila admite 64 transições digitais pendentes. Em saturação, a ponte fecha explicitamente a conexão responsável e neutraliza o controle, em vez de continuar jogando com uma soltura descartada. Não há garantia de preservar uma sequência ilimitada mais rápida que o consumo dos quadros. Esse caso extremo é testado; movimentos sozinhos não causam saturação. Troca de dono/desconexão limpa a sessão antiga; o marcador `off` não apaga um estado já recebido da conexão substituta. Um pacote lido após parar a ponte não volta a ativar o controle.
@@ -20,7 +22,7 @@ Wi-Fi, Bluetooth RFCOMM e navegador usam a mesma fila. O protocolo de pareamento
 
 ## Testes executados em 27/10/2026
 
-- **21 testes JVM**, incluindo sete novos: 10.000 movimentos, 12 toques completos em meio a rajadas de movimentos, direção/combinação segurada, saturação explícita sem evicção silenciosa, reset/reconexão, produtor/consumidor concorrentes e localidade árabe.
+- **22 testes JVM**, incluindo oito novos: 10.000 movimentos, 12 toques completos em meio a rajadas de movimentos, primeiro toque após o snapshot inicial, direção/combinação segurada, saturação explícita sem evicção silenciosa, reset/reconexão, produtor/consumidor concorrentes e localidade árabe.
 - **4 suítes CTest**, com SDL e QuickNES reais. O teste novo injeta a entrada durante uma espera simulada e lê o SDL depois dela, sem depender de tempo de parede. Confere todos os botões do mapeamento, solturas, diagonal, dois jogadores, analógicos, gatilhos, remapeamento e desconexão. Depois leva a leitura do SDL ao host Libretro/QuickNES e executa 148 quadros da demo NES original CC0: a imagem muda com o direcional pressionado e fica parada após soltar.
 - **8 testes Android** em Android TV 11/API 30 x86 virtual: três novos de entrada, um de metadados e quatro existentes de armazenamento/migração. O receptor TCP real recebe 12 toques completos em meio a 1.200 atualizações de eixos; todos os 24 estados de pressionar/soltar são observados em ordem. Também cobre todos os bits de botão, Home/Voltar, diagonais/combinações, fechamento por saturação e conexão substituta.
 - Compilação debug ARMv7 e x86/APK de testes; lint com zero erros e 51 avisos. Nenhuma regra foi desativada nesta mudança.

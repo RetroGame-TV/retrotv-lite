@@ -17,7 +17,8 @@ class PhoneInputQueue(private val capacity:Int=64){
     @Synchronized fun push(state:PhoneState):Boolean{
         val previous=latest?.let{Digital(it.buttons,it.dpad)}?:Digital()
         val next=Digital(state.buttons,state.dpad)
-        if(next!=previous){if(pending.size>=capacity)return false;pending.addLast(next)}
+        // Keep the connection's initial snapshot: SDL must attach/open the virtual pad before its next press event.
+        if(latest==null||next!=previous){if(pending.size>=capacity)return false;pending.addLast(next)}
         latest=state;return true
     }
     @Synchronized fun poll():String{
