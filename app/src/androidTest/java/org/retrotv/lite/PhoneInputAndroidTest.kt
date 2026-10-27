@@ -43,7 +43,8 @@ class PhoneInputAndroidTest{
             assertTrue(bridge.start())
             Socket("127.0.0.1",PhoneControllerBridge.WIFI_PORT).use{socket->
                 socket.soTimeout=5000;val output=socket.getOutputStream();val input=socket.getInputStream().bufferedReader()
-                output.write("H $id $token\n".toByteArray());output.flush();assertEquals("OK",input.readLine())
+                // Coalesce auth + the initial state in one TCP write; buffered pairing must not swallow input.
+                output.write("H $id $token\nI 0 0 0 0 0 0\n".toByteArray());output.flush();assertEquals("OK",input.readLine())
                 val expected=mutableListOf<Int>();val burst=StringBuilder()
                 repeat(12){i->
                     val state=PhoneState(buttons=1 shl (i%12));expected+=state.buttons;expected+=0

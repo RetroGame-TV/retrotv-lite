@@ -20,6 +20,8 @@ A fila admite 64 transições digitais pendentes. Em saturação, a ponte fecha 
 
 Wi-Fi, Bluetooth RFCOMM e navegador usam a mesma fila. O protocolo de pareamento, máscaras e formato das linhas não mudam. A decodificação passa a produzir um estado tipado e a saída para C++ usa dígitos ASCII independentemente do idioma do Android.
 
+Bluetooth e TCP passam a ler por um buffer de 8 KiB, evitando uma chamada de leitura ao transporte por byte da linha. O mesmo buffer TCP é usado do pareamento até o jogo, para não perder entrada que chegue junto da autenticação. O teste TCP envia autenticação e estado inicial na mesma escrita, seguido da rajada. O limite de 256 bytes por linha continua imposto pelo parser. WebSocket mantém sua leitura própria de frames, sem um novo buffer externo que pudesse bloquear um toque à espera de mais dados.
+
 ## Testes executados em 27/10/2026
 
 - **22 testes JVM**, incluindo oito novos: 10.000 movimentos, 12 toques completos em meio a rajadas de movimentos, primeiro toque após o snapshot inicial, direção/combinação segurada, saturação explícita sem evicção silenciosa, reset/reconexão, produtor/consumidor concorrentes e localidade árabe.
@@ -27,6 +29,8 @@ Wi-Fi, Bluetooth RFCOMM e navegador usam a mesma fila. O protocolo de pareamento
 - **8 testes Android** em Android TV 11/API 30 x86 virtual: três novos de entrada, um de metadados e quatro existentes de armazenamento/migração. O receptor TCP real recebe 12 toques completos em meio a 1.200 atualizações de eixos; todos os 24 estados de pressionar/soltar são observados em ordem. Também cobre todos os bits de botão, Home/Voltar, diagonais/combinações, fechamento por saturação e conexão substituta.
 - Compilação debug ARMv7 e x86/APK de testes; lint com zero erros e 51 avisos. Nenhuma regra foi desativada nesta mudança.
 - **Dentro do APK x86 com SDL/QuickNES ativos:** pareamento por código e canal TCP real no Android TV virtual. Uma rajada de 12 toques direita+A, 1.200 atualizações de eixos e as 12 solturas deslocou o quadrado da demo de x=535 para x=580 na tela (45 pixels, equivalentes aos 12 passos NES esperados, com escala horizontal 3,75). Após mais um segundo conectado e sem novos comandos, a imagem permaneceu idêntica pixel a pixel. Não foi apenas uma simulação da fila; o teste atravessou receptor, JNI, controle virtual SDL, mapeamento, núcleo e renderer da janela.
+
+Na repetição anterior à leitura em blocos, observou-se x=584 (13 passos), ainda com soltura estável. A duração em quadros pode variar enquanto os pacotes estão chegando; preservar 24 transições não garante exatamente um quadro físico por toque de rede. Após adicionar o buffer ao transporte, a nova execução voltou a x=580 e manteve o frame idêntico após soltar. Isso é uma amostra funcional, não um benchmark estatístico de duração/latência de pulsos. A ordem e a contagem das 24 transições são verificadas separadamente pelo teste do receptor.
 
 | Antes da rajada | Após os 12 toques e solturas |
 |---|---|

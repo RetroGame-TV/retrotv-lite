@@ -109,7 +109,7 @@ class PhoneControllerBridge(private val context:Context,private val failed:()->U
                     val peer=local.accept()
                     if(token!=generation.get()||peer.remoteDevice.bondState!=BluetoothDevice.BOND_BONDED||clients.size>=3){peer.close();continue}
                     clients[peer]=true
-                    Thread({try{serve(token,peer,peer.inputStream,peer.outputStream)}finally{clients.remove(peer);release(peer);runCatching{peer.close()}}},"RetroTV-PhoneBt").apply{isDaemon=true;start()}
+                    Thread({try{serve(token,peer,peer.inputStream.buffered(8192),peer.outputStream)}finally{clients.remove(peer);release(peer);runCatching{peer.close()}}},"RetroTV-PhoneBt").apply{isDaemon=true;start()}
                 }
             }catch(_:Exception){if(token==generation.get()&&tcp==null){running=false;status="Não foi possível abrir a sincronia do celular. Tente ativar novamente.";failed()}}
             finally{runCatching{local?.close()}}
@@ -132,7 +132,11 @@ class PhoneControllerBridge(private val context:Context,private val failed:()->U
                     val peer=socket.accept()
                     if(token!=generation.get()||clients.size>=3){peer.close();continue}
                     peer.tcpNoDelay=true;peer.soTimeout=15000;clients[peer]=true
-                    Thread({try{if(authorize(peer.getInputStream(),peer.getOutputStream()){peer.soTimeout=it})serve(token,peer,peer.getInputStream(),peer.getOutputStream())}catch(_:Exception){}finally{clients.remove(peer);release(peer);runCatching{peer.close()}}},"RetroTV-PhoneWifi").apply{isDaemon=true;start()}
+                    Thread({try{
+                        // Reuse one buffer across pairing and play: a read may include the first input after H/P.
+                        val input=peer.getInputStream().buffered(8192)
+                        if(authorize(input,peer.getOutputStream()){peer.soTimeout=it})serve(token,peer,input,peer.getOutputStream())
+                    }catch(_:Exception){}finally{clients.remove(peer);release(peer);runCatching{peer.close()}}},"RetroTV-PhoneWifi").apply{isDaemon=true;start()}
                 }
             }catch(_:Exception){}finally{runCatching{socket.close()}}
         },"RetroTV-WifiAccept").apply{isDaemon=true;start()}
