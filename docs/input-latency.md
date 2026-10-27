@@ -1,5 +1,7 @@
 # Entrada mais recente sem apagar toques curtos
 
+O SNES pode reduzir mais um quadro dentro do núcleo no build pessoal 0.7.4. A variante é separada do núcleo preservado para snapshots antigos: [build, teste de Street Fighter e proteção dos saves](snes-latency.md).
+
 ## O que mudou
 
 O motor espera o instante do próximo quadro **antes** de consultar o telefone, processar os eventos SDL e coletar os botões/eixos para o núcleo. Antes, coletava a entrada e só depois esperava. A sequência agora é espera → telefone → eventos/atualização SDL → mapeamento dos dois jogadores → `retro_run`. Não há segunda consulta da fila no mesmo quadro. Lançar/retomar pelo menu continua podendo executar o primeiro quadro imediatamente; o menu não recebe a espera do jogo.

@@ -1,6 +1,8 @@
 # RetroTV Lite
 
-Frontend de jogos retrô para **Android TV de entrada**, em C++17/SDL2/GLES2 + Kotlin. Interface própria, offline e feita para o controle remoto. Versão de desenvolvimento **0.7.3-dev**; não é uma release 1.0 certificada.
+Frontend de jogos retrô para **Android TV de entrada**, em C++17/SDL2/GLES2 + Kotlin. Interface própria, offline e feita para o controle remoto. Versão de desenvolvimento **0.7.4-dev**; não é uma release 1.0 certificada.
+
+O build pessoal pode incluir o SNES com menor atraso. Partidas novas usam LAGFIX; snapshots antigos mantêm o núcleo binário compatível, com cópias permanentes dos saves antes da primeira sessão acelerada. [Build, testes e limites](docs/snes-latency.md).
 
 **Por que "Lite":** o app foi pensado para o hardware das TVs mais simples, e não para celulares ou TV boxes potentes. Os limites abaixo valem para todas as decisões de interface e de emulação:
 

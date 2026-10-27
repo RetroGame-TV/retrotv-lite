@@ -5,7 +5,7 @@ Versões exatas: cores/registry.json e gitlinks. Nenhuma ROM/BIOS comercial dist
 | Sistema | Core | ARMv7 | Execução comprovada | Política/pendência |
 |---|---|---|---|---|
 | NES | QuickNES 26bb785 | Compilado no APK | Demo original no host Windows e em Android TV virtual x86 | TV de referência, 10 min e Bluetooth físicos pendentes |
-| SNES | Snes9x2005 a79dfe9 | Compilado | Não testado com jogo SNES | Build privado separado; licença mista/não comercial |
+| SNES | Snes9x2005 a79dfe9, legado + LAGFIX | Compilado | Street Fighter II do usuário no Android x86 virtual e comparação de resposta nos dois núcleos | Build privado; ARMv7 físico/Bluetooth pendentes; [saves e latência](snes-latency.md) |
 | Mega Drive / Master System | PicoDrive 1890c29 | Compilado | Não testado com jogo Mega Drive | Build privado separado; não comercial |
 | CPS1/CPS2 | FBNeo 2b0c1c0, subset cps12 | Compilado | Não testado | ROM-set específico; licença customizada, build privado |
 | PS1 | PCSX ReARMed c881679 | Compilado com VFS/CHD/NEON | Não testado com jogo PS1/BIOS | BIOS fornecida pelo usuário; CUE/CHD/M3U e discos condicionais à integração real |
