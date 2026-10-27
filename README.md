@@ -54,7 +54,7 @@ QuickNES compila pelo CMake; PCSX ReARMed compila pelo script a partir da revis�
 
 Essa variante reúne os cores principais no mesmo APK, mas **não está liberada para distribuição**: veja [licenças](docs/licenses.md). Não é um launcher de aplicativos externos.
 
-Linux/CI: `pwsh ./scripts/build-cores.ps1 -Sdk "$ANDROID_HOME"` e `bash ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleDebug`. O workflow em `.github/workflows/` está preparado, mas não foi executado no GitHub nesta entrega.
+Linux/CI: `pwsh ./scripts/build-cores.ps1 -Sdk "$ANDROID_HOME"` e `bash ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleDebug`. O workflow em `.github/workflows/` inclui testes nativos com SDL/QuickNES, testes JVM, lint e APKs ARMv7 com os núcleos GPL.
 
 ## Instalar e usar
 
