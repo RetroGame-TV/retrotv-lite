@@ -4,6 +4,7 @@
 #include "platform.hpp"
 #include "emulation/session.hpp"
 #include "input/frame_input.hpp"
+#include "input/phone_packet.hpp"
 #include <map>
 #include <cstdio>
 using namespace rt;
@@ -50,10 +51,10 @@ int main(int, char**) {
     // RetroTV Pad over RFCOMM/Wi-Fi becomes a virtual SDL game controller, so menus, remapping and players treat it like a gamepad.
     SDL_Joystick* phonePad=nullptr;int phoneIndex=-1;std::string phoneCode;bool phoneLinked=false;
     auto phoneInput=[&]{
-        auto value=platform.call("phoneInput");if(value.empty())return;
-        if(value=="off"){if(phonePad)SDL_JoystickClose(phonePad);phonePad=nullptr;if(phoneIndex>=0)SDL_JoystickDetachVirtual(phoneIndex);phoneIndex=-1;return;}
-        unsigned buttons=0;int dpad=0,lx=0,ly=0,rx=0,ry=0;
-        if(std::sscanf(value.c_str(),"%x %d %d %d %d %d",&buttons,&dpad,&lx,&ly,&rx,&ry)!=6)return;
+        auto packet=decodePhonePacket(platform.phoneInput());
+        if(packet.off){if(phonePad)SDL_JoystickClose(phonePad);phonePad=nullptr;if(phoneIndex>=0)SDL_JoystickDetachVirtual(phoneIndex);phoneIndex=-1;return;}
+        if(!packet.present)return;
+        auto buttons=packet.buttons;int dpad=packet.dpad,lx=packet.lx,ly=packet.ly,rx=packet.rx,ry=packet.ry;
         if(!phonePad){
             SDL_VirtualJoystickDesc desc;SDL_zero(desc);desc.version=SDL_VIRTUAL_JOYSTICK_DESC_VERSION;desc.type=SDL_JOYSTICK_TYPE_GAMECONTROLLER;
             desc.naxes=SDL_CONTROLLER_AXIS_MAX;desc.nbuttons=16;desc.button_mask=(1u<<16)-1;desc.axis_mask=(1u<<SDL_CONTROLLER_AXIS_MAX)-1;desc.name="RetroTV Pad";

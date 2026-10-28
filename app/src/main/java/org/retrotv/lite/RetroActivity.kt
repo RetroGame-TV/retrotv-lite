@@ -59,6 +59,7 @@ class RetroActivity : SDLActivity() {
     override fun onStop() { phoneBridge.stop(); super.onStop() }
     fun controllerContext(value:String):String { phoneBridge.publish(value); return "OK" }
     fun phoneInput(value:String):String = phoneBridge.pollInput()
+    fun phoneInputPacked():Long = phoneBridge.pollPacked()
     fun phoneLinked(value:String):String = if (phoneBridge.linked()) "1" else ""
     fun phoneOverlay(value:String):String = phoneBridge.overlay()
     fun phone(value:String):String {

@@ -32,10 +32,11 @@ object PadWire {
         return PhoneState(buttons,dpad,axes[0],axes[1],axes[2],axes[3])
     }
     fun parseInput(line:String):String?=parseState(line)?.nativeLine()
-    fun readLine(input:InputStream):String?{
+    fun readLine(input:InputStream,first:Int=input.read()):String?{
         val bytes=java.io.ByteArrayOutputStream()
-        while(true){val b=input.read();if(b==-1)return if(bytes.size()==0)null else throw java.io.EOFException("Truncated line")
-            if(b==10)return bytes.toString("UTF-8");if(bytes.size()>=MAX_LINE)throw java.io.IOException("Line too long");bytes.write(b)}
+        var b=first
+        while(true){if(b==-1)return if(bytes.size()==0)null else throw java.io.EOFException("Truncated line")
+            if(b==10)return bytes.toString("UTF-8");if(bytes.size()>=MAX_LINE)throw java.io.IOException("Line too long");bytes.write(b);b=input.read()}
     }
     fun validId(value:String)=value.matches(Regex("[A-Za-z0-9-]{4,40}"))
 }
@@ -49,7 +50,8 @@ object PadWire {
 class PhoneControllerBridge(private val context:Context,private val failed:()->Unit){
     companion object { const val SERVICE_UUID="8a421b90-d104-4ba2-8c72-50a34191ce01";const val NSD_TYPE="_retrotv._tcp.";const val WIFI_PORT=47800;const val WEB_PORT=47801 }
     private val generation=AtomicInteger(0)
-    private val message=AtomicReference("{\"version\":1,\"system\":\"\",\"title\":\"\",\"mode\":\"library\"}")
+    private val message=AtomicReference("{\"version\":1,\"inputBinary\":1,\"system\":\"\",\"title\":\"\",\"mode\":\"library\"}")
+    private val contextChanged=Object()
     private val clients=ConcurrentHashMap<Any,Boolean>()
     private val tokens by lazy{context.getSharedPreferences("phone_wifi",Context.MODE_PRIVATE)}
     private val random=SecureRandom()
@@ -67,16 +69,21 @@ class PhoneControllerBridge(private val context:Context,private val failed:()->U
     internal fun currentPacket():String=message.get()
     fun publish(value:String){
         val parts=value.split('\t',limit=3);if(parts.size!=3)return
-        message.set(JSONObject().put("version",1).put("system",parts[0].take(64)).put("title",parts[1].take(160)).put("mode",parts[2].take(24)).toString())
+        val next=JSONObject().put("version",1).put("inputBinary",1).put("system",parts[0].take(64)).put("title",parts[1].take(160)).put("mode",parts[2].take(24)).toString()
+        synchronized(contextChanged){if(message.get()!=next){message.set(next);contextChanged.notifyAll()}}
     }
     /** Native polling: current state, "off" once after the controlling phone disconnects, or "" when idle. */
     fun pollInput():String=states.poll()
+    fun pollPacked():Long=states.pollPacked()
     /** True while a phone is connected (or authorizing); native polls input every frame only then. */
     fun linked():Boolean=clients.isNotEmpty()
     /** Code to show on screen while a phone is pairing over Wi-Fi, or "". */
     fun overlay():String{val c=code;return if(c!=null&&System.currentTimeMillis()<codeUntil)c else ""}
     @Synchronized internal fun acceptInput(from:Any,line:String):Boolean{
         val state=PadWire.parseState(line)?:return false
+        return acceptState(from,state)
+    }
+    @Synchronized internal fun acceptState(from:Any,state:PhoneState):Boolean{
         if(owner!=null&&owner!==from)states.reset()
         if(!states.push(state)){
             // Never silently discard a press/release when a producer exceeds frame consumption.
@@ -203,13 +210,17 @@ class PhoneControllerBridge(private val context:Context,private val failed:()->U
             return false
         }finally{if(code==shown)code=null;timeout(15000)}
     }
-    /** Sends console context every second and reads controller lines until the phone leaves; "K" lines only keep it alive. */
+    /** Initial context and real changes only; controller keepalives still arrive independently. */
     private fun serve(token:Int,peer:Any,input:InputStream,out:OutputStream){
         val writer=Thread({
-            try{while(token==generation.get()){synchronized(out){out.write((message.get()+"\n").toByteArray(Charsets.UTF_8));out.flush()};Thread.sleep(1000)}}
+            try{var sent:String?=null;while(token==generation.get()){
+                val next=synchronized(contextChanged){while(token==generation.get()&&message.get()==sent)contextChanged.wait();message.get()}
+                if(token!=generation.get())break
+                synchronized(out){out.write((next+"\n").toByteArray(Charsets.UTF_8));out.flush()};sent=next
+            }}
             catch(_:Exception){}finally{runCatching{(peer as? AutoCloseable)?.close()}}
         },"RetroTV-PhoneState").apply{isDaemon=true;start()}
-        try{while(token==generation.get()){val line=PadWire.readLine(input)?:break;if(token!=generation.get())break;if(line.startsWith("I "))acceptInput(peer,line)}}
+        try{while(token==generation.get()){val packet=CompactInput.read(input)?:break;if(token!=generation.get())break;val state=packet.state;if(state!=null&&!acceptState(peer,state))break}}
         catch(_:Exception){}finally{writer.interrupt()}
     }
     private fun address():String?=runCatching{

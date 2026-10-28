@@ -1,5 +1,7 @@
 # Entrada mais recente sem apagar toques curtos
 
+TV 0.7.5 e Pad 0.3.6 acrescentam [formato de 9 bytes e JNI sem strings](compact-input.md), com testes dos dois APKs ligados ao Street Fighter virtual e preservação das transições digitais.
+
 O SNES pode reduzir mais um quadro dentro do núcleo no build pessoal 0.7.4. A variante é separada do núcleo preservado para snapshots antigos: [build, teste de Street Fighter e proteção dos saves](snes-latency.md).
 
 ## O que mudou

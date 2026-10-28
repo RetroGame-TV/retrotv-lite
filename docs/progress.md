@@ -1,5 +1,11 @@
 # Progresso real
 
+## Entrada compacta RFCOMM/Wi-Fi · 0.7.5-dev
+
+Implementado/testado: negociação de estados completos de 9 bytes, leitor misto compatível com linhas antigas, estados equivalentes de analógico descartados no Pad, metadados apenas na conexão/mudança e JNI packed long sem string/sscanf por quadro. A fila digital não funde pressionar/soltar. Saturação interrompe a leitura antes de processar a cauda já no buffer e neutraliza a conexão.
+
+Validação: 26 testes JVM da TV + 47 do Pad, 6 CTests, 11 testes Android da TV, 24 do runner do Pad e 1 integração opt-in Pad → TV com Street Fighter II ativo (mesmo núcleo SNES LAGFIX). Microbenchmarks de CPU e limites em [entrada compacta](compact-input.md). Atualização da TV virtual preservou 7 arquivos de save por hash; núcleos/assinatura preservados no APK pessoal. Hid indisponível no moto g55 continua sendo uma restrição; não foi usado. Bluetooth físico, latência total e uso simultâneo de múltiplos transportes permanecem não validados/não implementados.
+
 ## SNES com menor atraso e snapshots preservados · 0.7.4-dev · 27/10/2026
 
 - Build privado de Snes9x 2005 com LAGFIX em arquivo separado, mantendo o `.so` anterior. Wrapper Android próprio sobre a revisão fixada, sem modificar o submódulo. Novas partidas usam a variante rápida; continuar/carregar seleciona o binário exato do snapshot. SRAM mantém sua identidade e validação. Cópias permanentes `.before-snes-lagfix` ficam separadas dos `.prev`.

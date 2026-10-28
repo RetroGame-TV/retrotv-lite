@@ -12,8 +12,8 @@ android {
         applicationId = "org.retrotv.lite"
         minSdk = 26
         targetSdk = 32
-        versionCode = 17
-        versionName = "0.7.4-dev"
+        versionCode = 18
+        versionName = "0.7.5-dev"
         ndk { abiFilters += (testAbi ?: "armeabi-v7a") }
         externalNativeBuild { cmake {
             cppFlags += listOf("-std=c++17", "-Wall", "-Wextra"); arguments += "-DANDROID_STL=c++_shared"
