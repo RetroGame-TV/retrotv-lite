@@ -1,6 +1,10 @@
 # RetroTV Lite
 
-Frontend de jogos retrô para **Android TV de entrada**, em C++17/SDL2/GLES2 + Kotlin. Interface própria, offline e feita para o controle remoto. Versão de desenvolvimento **0.7.3-dev**; não é uma release 1.0 certificada.
+Frontend de jogos retrô para **Android TV de entrada**, em C++17/SDL2/GLES2 + Kotlin. Interface própria, offline e feita para o controle remoto. Versão de desenvolvimento **0.7.5-dev**; não é uma release 1.0 certificada.
+
+Pad e TV novos negociam entrada de 9 bytes em RFCOMM/Wi-Fi, preservando o formato anterior. O motor recebe estado compacto por JNI e a fila mantém pressionar/soltar. [Implementação, testes e limites](docs/compact-input.md).
+
+O build pessoal pode incluir o SNES com menor atraso. Partidas novas usam LAGFIX; snapshots antigos mantêm o núcleo binário compatível, com cópias permanentes dos saves antes da primeira sessão acelerada. [Build, testes e limites](docs/snes-latency.md).
 
 **Por que "Lite":** o app foi pensado para o hardware das TVs mais simples, e não para celulares ou TV boxes potentes. Os limites abaixo valem para todas as decisões de interface e de emulação:
 
@@ -54,7 +58,7 @@ QuickNES compila pelo CMake; PCSX ReARMed compila pelo script a partir da revis�
 
 Essa variante reúne os cores principais no mesmo APK, mas **não está liberada para distribuição**: veja [licenças](docs/licenses.md). Não é um launcher de aplicativos externos.
 
-Linux/CI: `pwsh ./scripts/build-cores.ps1 -Sdk "$ANDROID_HOME"` e `bash ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleDebug`. O workflow em `.github/workflows/` está preparado, mas não foi executado no GitHub nesta entrega.
+Linux/CI: `pwsh ./scripts/build-cores.ps1 -Sdk "$ANDROID_HOME"` e `bash ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleDebug`. O workflow em `.github/workflows/` inclui testes nativos com SDL/QuickNES, testes JVM, lint e APKs ARMv7 com os núcleos GPL.
 
 ## Instalar e usar
 
@@ -78,5 +82,7 @@ ctest --test-dir build/native --output-on-failure
 ```
 
 São testes reais de QuickNES e políticas de navegação/saves/VFS. Testes Android adicionais usam provider sintético apenas no debug. Variante exclusiva para emulador: `-PtestAbi=x86` (saídas em `app/build-emulator/`; não entregar para a TV ARM).
+
+A entrada do jogo é coletada depois da espera do quadro; o canal do celular mantém os analógicos mais recentes e preserva os toques curtos e as sequências digitais. A validação inclui SDL/QuickNES reais e receptor TCP no Android TV virtual. Veja [entrada, testes de botões e limites](docs/input-latency.md).
 
 Controle Bluetooth pelo celular e troca automática de layout: veja docs/phone-controller.md. Exige RetroTV Pad no celular; a sincronização é opcional e desligada por padrão.

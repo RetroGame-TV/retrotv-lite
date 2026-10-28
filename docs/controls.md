@@ -10,4 +10,6 @@ Desconexão pausa a sessão e limpa entradas. Voltar/OK recupera o menu. Sem gam
 
 Pendente: dois gamepads Bluetooth reais na TV de referência, layouts Android não padronizados, latência e reatribuição por dispositivo específico.
 
+O motor coleta a entrada depois de esperar o próximo quadro. No canal de celular, movimentos dos analógicos usam o valor mais recente, e pressionar/soltar e mudanças do direcional mantêm a ordem. Veja [implementação, testes e limites de latência](input-latency.md), inclusive o comportamento explícito em saturação da fila.
+
 Detalhes: esquerda/direita escolhe Jogar ou Continuar (somente se houver snapshot); baixo percorre favoritos, imagem/áudio e retorno. Em Imagem e áudio, cima/baixo escolhe a linha e OK alterna o valor. A primeira linha alterna escopo jogo/console. Voltar retorna ao detalhe ou à pausa de origem.

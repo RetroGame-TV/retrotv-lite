@@ -1,0 +1,17 @@
+LOCAL_PATH := $(RETROTV_SNES_SOURCE)/jni
+ROOT_DIR := $(LOCAL_PATH)/..
+CORE_DIR := $(ROOT_DIR)/source
+LIBRETRO_DIR := $(ROOT_DIR)
+LOAD_FROM_MEMORY := 1
+FLAGS :=
+include $(ROOT_DIR)/Makefile.common
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := retro
+LOCAL_SRC_FILES := $(patsubst $(LOCAL_PATH)/%,%,$(SOURCES_C))
+LOCAL_CFLAGS := -ffast-math $(FLAGS) -DGIT_VERSION=\"$(RETROTV_CORE_REVISION)\"
+ifeq ($(RETROTV_SNES_LAGFIX),1)
+  LOCAL_CFLAGS += -DLAGFIX
+endif
+LOCAL_LDFLAGS := -Wl,-version-script=$(LIBRETRO_DIR)/link.T
+include $(BUILD_SHARED_LIBRARY)

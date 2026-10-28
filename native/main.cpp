@@ -3,6 +3,8 @@
 #include "ui/renderer.hpp"
 #include "platform.hpp"
 #include "emulation/session.hpp"
+#include "input/frame_input.hpp"
+#include "input/phone_packet.hpp"
 #include <map>
 #include <cstdio>
 using namespace rt;
@@ -49,10 +51,10 @@ int main(int, char**) {
     // RetroTV Pad over RFCOMM/Wi-Fi becomes a virtual SDL game controller, so menus, remapping and players treat it like a gamepad.
     SDL_Joystick* phonePad=nullptr;int phoneIndex=-1;std::string phoneCode;bool phoneLinked=false;
     auto phoneInput=[&]{
-        auto value=platform.call("phoneInput");if(value.empty())return;
-        if(value=="off"){if(phonePad)SDL_JoystickClose(phonePad);phonePad=nullptr;if(phoneIndex>=0)SDL_JoystickDetachVirtual(phoneIndex);phoneIndex=-1;return;}
-        unsigned buttons=0;int dpad=0,lx=0,ly=0,rx=0,ry=0;
-        if(std::sscanf(value.c_str(),"%x %d %d %d %d %d",&buttons,&dpad,&lx,&ly,&rx,&ry)!=6)return;
+        auto packet=decodePhonePacket(platform.phoneInput());
+        if(packet.off){if(phonePad)SDL_JoystickClose(phonePad);phonePad=nullptr;if(phoneIndex>=0)SDL_JoystickDetachVirtual(phoneIndex);phoneIndex=-1;return;}
+        if(!packet.present)return;
+        auto buttons=packet.buttons;int dpad=packet.dpad,lx=packet.lx,ly=packet.ly,rx=packet.rx,ry=packet.ry;
         if(!phonePad){
             SDL_VirtualJoystickDesc desc;SDL_zero(desc);desc.version=SDL_VIRTUAL_JOYSTICK_DESC_VERSION;desc.type=SDL_JOYSTICK_TYPE_GAMECONTROLLER;
             desc.naxes=SDL_CONTROLLER_AXIS_MAX;desc.nbuttons=16;desc.button_mask=(1u<<16)-1;desc.axis_mask=(1u<<SDL_CONTROLLER_AXIS_MAX)-1;desc.name="RetroTV Pad";
@@ -124,7 +126,7 @@ int main(int, char**) {
                 if(a!=Action::Ok)return;
                 bool ok=true;
                 if(pendingAction==1)ok=session.save(true);
-                if(pendingAction==2)ok=session.load();
+                if(pendingAction==2)ok=session.load(platform);
                 if(pendingAction==3)session.host.reset();
                 if(pendingAction==7){session.finish(platform);model.selectTab(model.lastContentTab);loadCatalog();model.screen=Screen::Library;return;}
                 model.screen=ok?Screen::QuickMenu:Screen::Error;model.message=session.error;return;
@@ -181,6 +183,9 @@ int main(int, char**) {
         saveFocus();
     };
     while(running) {
+        // Pace first: the phone queue, SDL event pump and game sampling must all see input that arrived in the wait.
+        if(session.host.state==SessionState::Running)
+            waitForGameFrame(nextFrame,SDL_GetPerformanceCounter(),SDL_GetPerformanceFrequency(),SDL_Delay);
         // Per-frame JNI polling only while a phone is connected; the link state is refreshed every 500 ms.
         if(phoneLinked||phonePad)phoneInput();
         SDL_Event e;
@@ -237,13 +242,12 @@ int main(int, char**) {
             if(context!=lastPhoneContext){platform.call("controllerContext",context);lastPhoneContext=context;}
         }else lastPhoneContext.clear();
         if(session.host.state==SessionState::Running){
-            session.host.buttons={};session.host.axes={};
-            for(int port=0;port<2;++port){auto it=controllers.find(players[port]);if(it==controllers.end())continue;auto& mapping=mappings[it->first];for(int id=0;id<16;++id){if(mapping[id]>=0)session.host.buttons[port][id]=SDL_GameControllerGetButton(it->second,SDL_GameControllerButton(mapping[id]));else if(mapping[id]==-2||mapping[id]==-3)session.host.buttons[port][id]=SDL_GameControllerGetAxis(it->second,mapping[id]==-2?SDL_CONTROLLER_AXIS_TRIGGERLEFT:SDL_CONTROLLER_AXIS_TRIGGERRIGHT)>8000;}for(int axis=0;axis<4;++axis){auto value=SDL_GameControllerGetAxis(it->second,SDL_GameControllerAxis(axis));session.host.axes[port][axis]=std::abs(int(value))<8000?0:value;}}
+            sampleGamepads(controllers,players,mappings,session.host.buttons,session.host.axes);
             auto* keys=SDL_GetKeyboardState(nullptr);auto& buttons=session.host.buttons[0];
             for(int id=0;id<16;++id)buttons[id]|=remotePulse[id]|remoteHeld[id];remotePulse={};
             buttons[RETRO_DEVICE_ID_JOYPAD_UP]|=keys[SDL_SCANCODE_UP];buttons[RETRO_DEVICE_ID_JOYPAD_DOWN]|=keys[SDL_SCANCODE_DOWN];buttons[RETRO_DEVICE_ID_JOYPAD_LEFT]|=keys[SDL_SCANCODE_LEFT];buttons[RETRO_DEVICE_ID_JOYPAD_RIGHT]|=keys[SDL_SCANCODE_RIGHT];buttons[RETRO_DEVICE_ID_JOYPAD_A]|=keys[SDL_SCANCODE_RETURN]||keys[SDL_SCANCODE_X]||keys[SDL_SCANCODE_SELECT];buttons[RETRO_DEVICE_ID_JOYPAD_B]|=keys[SDL_SCANCODE_Z];buttons[RETRO_DEVICE_ID_JOYPAD_START]|=keys[SDL_SCANCODE_SPACE];buttons[RETRO_DEVICE_ID_JOYPAD_SELECT]|=keys[SDL_SCANCODE_TAB];
-            auto now=SDL_GetPerformanceCounter();if(!nextFrame)nextFrame=now;
-            if(now<nextFrame)SDL_Delay(Uint32((nextFrame-now)*1000/SDL_GetPerformanceFrequency()));
+            // Launch/resume can happen in the event pump after the pacing check above.
+            if(!nextFrame)nextFrame=SDL_GetPerformanceCounter();
             session.tick();if(session.host.state==SessionState::Paused&&!session.error.empty()){model.screen=Screen::Error;model.message=session.error;}session.draw();if(!phoneCode.empty())ui.phoneCode(phoneCode);SDL_RenderPresent(renderer);session.presented();
             nextFrame+=uint64_t(double(SDL_GetPerformanceFrequency())/session.host.av.timing.fps);if(SDL_GetPerformanceCounter()>nextFrame+SDL_GetPerformanceFrequency()/4)nextFrame=SDL_GetPerformanceCounter();
         }else {remoteHeld={};model.sessionActive=session.active();ui.draw(model,platform.call("status"));if(!phoneCode.empty())ui.phoneCode(phoneCode);SDL_RenderPresent(renderer);SDL_Delay(model.performance?20:4);}

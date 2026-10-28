@@ -12,11 +12,20 @@ class Platform {
     // Some calls run every frame; method IDs stay valid while the activity class is loaded.
     // Cores may reach call() from their own threads (VFS), hence the lock.
     std::unordered_map<std::string,jmethodID> methods; std::mutex methodsLock;
+    jmethodID phoneInputMethod=nullptr; // main thread only, activity class remains loaded
     jmethodID methodId(JNIEnv* e,jclass cls,const char* method) {
         std::lock_guard<std::mutex> lock(methodsLock); auto cached=methods.find(method); if(cached!=methods.end())return cached->second;
         auto mid=e->GetMethodID(cls,method,"(Ljava/lang/String;)Ljava/lang/String;"); if(mid)methods.emplace(method,mid); return mid;
     }
 public:
+    uint64_t phoneInput(){
+        auto* e=env();auto activity=static_cast<jobject>(SDL_AndroidGetActivity());
+        if(!phoneInputMethod){auto cls=e->GetObjectClass(activity);phoneInputMethod=e->GetMethodID(cls,"phoneInputPacked","()J");e->DeleteLocalRef(cls);}
+        jlong result=0;
+        if(phoneInputMethod)result=e->CallLongMethod(activity,phoneInputMethod);
+        if(e->ExceptionCheck()){e->ExceptionDescribe();e->ExceptionClear();result=-1;}
+        e->DeleteLocalRef(activity);return uint64_t(result);
+    }
     std::string call(const char* method, const std::string& value="") {
         auto* e=env(); auto activity=static_cast<jobject>(SDL_AndroidGetActivity()); auto cls=e->GetObjectClass(activity);
         auto mid=methodId(e,cls,method);

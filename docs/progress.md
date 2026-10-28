@@ -1,5 +1,32 @@
 # Progresso real
 
+## Entrada compacta RFCOMM/Wi-Fi · 0.7.5-dev
+
+Implementado/testado: negociação de estados completos de 9 bytes, leitor misto compatível com linhas antigas, estados equivalentes de analógico descartados no Pad, metadados apenas na conexão/mudança e JNI packed long sem string/sscanf por quadro. A fila digital não funde pressionar/soltar. Saturação interrompe a leitura antes de processar a cauda já no buffer e neutraliza a conexão.
+
+Validação: 26 testes JVM da TV + 47 do Pad, 6 CTests, 11 testes Android da TV, 24 do runner do Pad e 1 integração opt-in Pad → TV com Street Fighter II ativo (mesmo núcleo SNES LAGFIX). Microbenchmarks de CPU e limites em [entrada compacta](compact-input.md). Atualização da TV virtual preservou 7 arquivos de save por hash; núcleos/assinatura preservados no APK pessoal. Hid indisponível no moto g55 continua sendo uma restrição; não foi usado. Bluetooth físico, latência total e uso simultâneo de múltiplos transportes permanecem não validados/não implementados.
+
+## SNES com menor atraso e snapshots preservados · 0.7.4-dev · 27/10/2026
+
+- Build privado de Snes9x 2005 com LAGFIX em arquivo separado, mantendo o `.so` anterior. Wrapper Android próprio sobre a revisão fixada, sem modificar o submódulo. Novas partidas usam a variante rápida; continuar/carregar seleciona o binário exato do snapshot. SRAM mantém sua identidade e validação. Cópias permanentes `.before-snes-lagfix` ficam separadas dos `.prev`.
+- Android x86: 120 comparações determinísticas na cópia de Street Fighter II do usuário, com 12 entradas e cinco repetições por núcleo. Direções/diagonais passaram de 3 para 2 quadros; seis golpes de 4 para 3. Ganho interno de um quadro (~16,69 ms nominais), sem medição física de toque/Bluetooth.
+- Atualização da TV virtual 0.7.3 → 0.7.4 por `install -r`: quatro arquivos de save preservados byte a byte por SHA-256. Retomada antiga abriu no núcleo legado; Jogar agora abriu no novo e criou cópia permanente idêntica. Carregar antigo pelo menu trocou para o legado; novo estado salvo no menu do app reabriu no novo. Bibliotecas conferidas em `/proc/PID/maps`; partida, direções, diagonal e golpes exercitados via TCP real do controle.
+- Cinco CTests passaram, incluindo nova suíte de seleção, SRAM, backup imutável após oito gravações e recusa de estados estranhos/corrompidos. Build/teste JVM 22 verdes; oito testes Android de entrada/metadados/armazenamento passaram novamente. Builds ARMv7 e x86 passaram; lint zero erros/51 avisos anteriores. APK pessoal versionCode 17, mesma assinatura e cinco núcleos anteriores preservados; acrescenta somente a variante SNES.
+- Limite: snapshot antigo continua com o atraso do núcleo anterior; iniciar normalmente habilita a redução. Não há conversão forçada, reset de saves ou limpeza de dados. Não houve execução ARMv7 nem Bluetooth na TV física. Detalhes e reprodução em [SNES e saves](snes-latency.md).
+
+## Atualização de entrada · 27/10/2026
+
+- Implementado e testado: esperar o próximo quadro antes de consultar o telefone/processar SDL/coletar botões e eixos. Menu e primeiro quadro ao lançar/retomar mantêm seu comportamento.
+- Implementado e testado: analógicos usam o valor mais recente; cada mudança digital entra em FIFO, sem pacotes de movimento ocupando quadros adicionais. Toques curtos, diagonais, combinações, Home/Voltar e direção segurada são preservados. Saturação de 64 transições é explícita e neutraliza/desconecta em vez de descartar uma soltura silenciosamente; reset não apaga a conexão substituta.
+- O snapshot inicial fica preservado antes do primeiro toque. Bluetooth/TCP usam buffer de 8 KiB; TCP reaproveita esse buffer entre autenticação e jogo. O teste cobre H + estado inicial na mesma escrita, evitando perda por pré-leitura. WebSocket mantém sua leitura de frames.
+- Executado: 22 testes JVM, 4 CTests e 8 testes Android em Android TV 11/API 30 x86 virtual. O novo CTest usa SDL real, dois controles virtuais e o host/QuickNES real por 148 quadros, conferindo movimento e parada após soltura. O Android usa receptor TCP real com 12 toques e 1.200 atualizações de eixos.
+- Executado no APK x86 com jogo ativo: a mesma rajada de 12 toques pelo canal de celular produziu 12 passos na demo original. Captura passou de x=535 a x=580 (45 px de tela/12 px NES); o frame ficou idêntico após mais um segundo solto, ainda conectado. Capturas e detalhes em [entrada e latência](input-latency.md).
+- Uma repetição antes do buffer mostrou 13 passos, com soltura estável; após o buffer, a execução repetiu os 12 passos. Isso não é uma garantia estatística de duração de pulso. Os 24 estados digitais são contados separadamente no receptor; latência física continua pendente.
+- Builds debug ARMv7 e x86/APK de testes passaram; lint com zero erros/51 avisos. APK ARMv7 pessoal mantém o certificado e os cinco núcleos idênticos aos da versão anterior, usando opção local explícita para preservar a identidade do QuickNES e seus estados salvos. Build padrão/CI continua compilando QuickNES das fontes fixadas.
+- Pendente: Bluetooth RFCOMM entre aparelhos, latência física toque→imagem e sessão longa em todos os consoles. Não houve instalação em TV física nesta alteração.
+
+## Histórico dos marcos
+
 Não há TV conectada nem validação física. Fases são marcos de implementação, não certificação.
 
 | Fase | Código | Verificação / pendências |

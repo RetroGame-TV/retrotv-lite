@@ -1,5 +1,7 @@
 # Saves e recuperação
 
+Atualização SNES 0.7.4: [seleção de núcleo por snapshot e cópias permanentes antes de LAGFIX](snes-latency.md). Jogar agora usa a variante rápida; Continuar partida mantém o binário exato do estado existente. Não há conversão automática nem relaxamento da validação de snapshots.
+
 files/saves/<id>/progress.sram é progresso convencional; resume.state é snapshot. Envelope RTVSAVE2 inclui identidade do conteúdo, identidade do core, tipo, tamanho e CRC32. Snapshot exige versão e hash binário exatos do núcleo. SRAM usa família do núcleo (por exemplo QuickNES), permitindo recompilar/atualizar o mesmo núcleo; o host ainda exige tamanho exato. Metadados antigos de SRAM com versão/hash são aceitos na mesma família. Troca de família, conteúdo, tamanho ou CRC inválido é recusada. CRC detecta corrupção acidental, não autentica terceiros. Rom simples usa CRC de todos os bytes; discos usam amostras início/fim + tamanho/mtime para evitar leitura integral.
 
 Gravação: temporário, flush, fsync, rename, cópia .prev e sincronização do diretório no Android. Save inválido anterior é preservado como .rejected, sem destruir .prev válido. Limite de snapshot: 32 MiB. SRAM é persistida periodicamente a cada 10s de execução, ao salvar, pausar e sair quando o lifecycle permite. Corte de energia pode perder alterações desde o último flush.
